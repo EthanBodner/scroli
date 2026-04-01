@@ -7,8 +7,12 @@ import { GoalStep } from './GoalStep';
 import { StakeStep } from './StakeStep';
 import { Button } from '../../components/ui/Button';
 import { useAuthStore } from '../../stores/authStore';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../services/supabase';
+import { showAlert } from '../../utils/alert';
 
 export const OnboardingScreen: React.FC = () => {
+  const { user } = useAuth();
   const { completeOnboarding } = useAuthStore();
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -16,12 +20,29 @@ export const OnboardingScreen: React.FC = () => {
   const totalSteps = steps.length;
   const CurrentStepComponent = steps[currentStep];
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Complete onboarding — RootNavigator will automatically
-      // switch to Main once hasCompletedOnboarding becomes true
+      if (user) {
+        try {
+          const { error } = await supabase
+            .from('profiles')
+            .update({ has_completed_onboarding: true })
+            .eq('id', user.id);
+
+          if (error) {
+            console.error('Error saving onboarding status:', error);
+            showAlert('Wait...', 'We couldn\'t save your progress. Please try again.');
+            return;
+          }
+        } catch (err) {
+          console.error('Error in onboarding completion:', err);
+        }
+      }
+
+      // Complete onboarding in local state — RootNavigator will
+      // automatically switch to Main now that it's persisted/synced
       completeOnboarding();
     }
   };

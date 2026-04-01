@@ -26,7 +26,8 @@ create table profiles (
   username text unique,
   full_name text,
   avatar_url text,
-  website text
+  website text,
+  has_completed_onboarding boolean default false
 );
 
 alter table profiles enable row level security;
