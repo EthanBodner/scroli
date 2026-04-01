@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '../../theme';
+import { Mascot } from '../../components/mascots/Mascot';
 
 interface RealityStepProps {
   goalHours: number;
@@ -10,9 +11,7 @@ interface RealityStepProps {
 export const RealityStep: React.FC<RealityStepProps> = ({ goalHours, actualHours }) => {
   return (
     <View style={styles.container}>
-      <View style={{ width: 200, height: 200, backgroundColor: '#FCA5A5', borderRadius: 100, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 80 }}>😢</Text>
-      </View>
+      <Mascot size={200} usagePercent={1} />
 
       <Text style={styles.title}>Here's the reality...</Text>
 

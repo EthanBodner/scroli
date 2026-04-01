@@ -1,83 +1,106 @@
-import React, { useEffect } from 'react';
-import { View } from 'react-native';
-import Svg, { Circle, Ellipse, Path, G, Rect } from 'react-native-svg';
-import Animated, {
-  useSharedValue,
-  useAnimatedProps,
-  withRepeat,
-  withSequence,
-  withTiming,
-  interpolate,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { View, Animated } from 'react-native';
+import Svg, { Circle, Ellipse, Path, Rect } from 'react-native-svg';
 import { MascotProps, getMascotEmotion } from './types';
 import { theme } from '../../theme';
 
-const AnimatedG = Animated.createAnimatedComponent(G);
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export const PiggyMascot: React.FC<MascotProps> = ({ size = 240, usagePercent }) => {
   const emotion = getMascotEmotion(usagePercent);
-  const rotation = useSharedValue(0);
-  const bounce = useSharedValue(0);
+  const bounceAnim = useRef(new Animated.Value(0)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+
+  // Crack and coin animations
+  const crack1Opacity = useRef(new Animated.Value(usagePercent > 0.5 ? 1 : 0)).current;
+  const crack2Opacity = useRef(new Animated.Value(usagePercent > 0.7 ? 1 : 0)).current;
+  const coin1Opacity = useRef(new Animated.Value(usagePercent < 0.3 ? 1 : 0)).current;
+  const coin2Opacity = useRef(new Animated.Value(usagePercent < 0.6 ? 1 : 0)).current;
 
   useEffect(() => {
-    rotation.value = withRepeat(
-      withSequence(
-        withTiming(-3, { duration: 1500 }),
-        withTiming(3, { duration: 1500 })
-      ),
-      -1,
-      true
-    );
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounceAnim, {
+          toValue: -5,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounceAnim, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
 
-    bounce.value = withRepeat(
-      withSequence(
-        withTiming(-5, { duration: 1000 }),
-        withTiming(0, { duration: 1000 })
-      ),
-      -1,
-      true
-    );
-  }, [rotation, bounce]);
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(rotateAnim, {
+          toValue: -3,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnim, {
+          toValue: 3,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
 
-  const animatedPropsGroup = useAnimatedProps(() => ({
-    transform: `rotate(${rotation.value}) translateY(${bounce.value})`,
-  }));
+    // Animate cracks and coins
+    Animated.timing(crack1Opacity, {
+      toValue: usagePercent > 0.5 ? 1 : 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
 
-  // Cracks appear as usage increases
-  const crack1Opacity = useAnimatedProps(() => ({
-    opacity: interpolate(usagePercent, [0.5, 0.7], [0, 1], 'clamp'),
-  }));
+    Animated.timing(crack2Opacity, {
+      toValue: usagePercent > 0.7 ? 1 : 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
 
-  const crack2Opacity = useAnimatedProps(() => ({
-    opacity: interpolate(usagePercent, [0.7, 0.9], [0, 1], 'clamp'),
-  }));
+    Animated.timing(coin1Opacity, {
+      toValue: usagePercent < 0.3 ? 1 : 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
 
-  // Coins disappear as usage increases
-  const coin1Opacity = useAnimatedProps(() => ({
-    opacity: interpolate(usagePercent, [0, 0.3], [1, 0], 'clamp'),
-  }));
-
-  const coin2Opacity = useAnimatedProps(() => ({
-    opacity: interpolate(usagePercent, [0.3, 0.6], [1, 0], 'clamp'),
-  }));
+    Animated.timing(coin2Opacity, {
+      toValue: usagePercent < 0.6 ? 1 : 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [bounceAnim, rotateAnim, usagePercent, crack1Opacity, crack2Opacity, coin1Opacity, coin2Opacity]);
 
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Svg width={size} height={size} viewBox="0 0 240 240">
-        <Ellipse cx="120" cy="220" rx="70" ry="8" fill="black" fillOpacity="0.1" />
+      <Animated.View
+        style={{
+          transform: [
+            { translateY: bounceAnim },
+            { rotate: rotateAnim.interpolate({
+                inputRange: [-3, 3],
+                outputRange: ['-3deg', '3deg'],
+              })
+            },
+          ],
+        }}
+      >
+        <Svg width={size} height={size} viewBox="0 0 240 240">
+          <Ellipse cx="120" cy="220" rx="70" ry="8" fill="black" fillOpacity="0.1" />
 
-        <AnimatedG animatedProps={animatedPropsGroup}>
           {/* Piggy bank body */}
           <Ellipse cx="120" cy="140" rx="60" ry="50" fill="#FCA5A5" />
 
           {/* Coin slot */}
           <Rect x="110" y="110" width="20" height="4" fill="#DC2626" />
 
-          {/* Coins floating above (disappear with usage) */}
-          <AnimatedCircle cx="90" cy="95" r="8" fill="#FBBF24" animatedProps={coin1Opacity} />
-          <AnimatedCircle cx="150" cy="95" r="8" fill="#FBBF24" animatedProps={coin2Opacity} />
+          {/* Coins floating above - animated */}
+          <AnimatedCircle cx="90" cy="95" r="8" fill="#FBBF24" opacity={coin1Opacity} />
+          <AnimatedCircle cx="150" cy="95" r="8" fill="#FBBF24" opacity={coin2Opacity} />
 
           {/* Snout */}
           <Ellipse cx="120" cy="145" rx="20" ry="15" fill="#F87171" />
@@ -106,25 +129,25 @@ export const PiggyMascot: React.FC<MascotProps> = ({ size = 240, usagePercent })
             </>
           )}
 
-          {/* Cracks appear when usage is high */}
+          {/* Cracks appear when usage is high - animated */}
           <AnimatedPath
             d="M90 140 L80 160 M85 145 L75 155"
             stroke="#DC2626"
             strokeWidth="2"
-            animatedProps={crack1Opacity}
+            opacity={crack1Opacity}
           />
           <AnimatedPath
             d="M150 140 L160 160 M155 145 L165 155"
             stroke="#DC2626"
             strokeWidth="2"
-            animatedProps={crack2Opacity}
+            opacity={crack2Opacity}
           />
 
           {/* Legs */}
           <Rect x="90" y="175" width="15" height="20" rx="7" fill="#F87171" />
           <Rect x="135" y="175" width="15" height="20" rx="7" fill="#F87171" />
-        </AnimatedG>
-      </Svg>
+        </Svg>
+      </Animated.View>
     </View>
   );
 };

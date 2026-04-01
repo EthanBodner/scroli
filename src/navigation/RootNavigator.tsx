@@ -25,9 +25,6 @@ export const RootNavigator: React.FC = () => {
           <Stack.Screen
             name="ImpactFlow"
             component={ImpactFlowScreen}
-            options={{
-              presentation: 'modal',
-            }}
           />
         </>
       )}

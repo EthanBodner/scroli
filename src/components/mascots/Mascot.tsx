@@ -1,56 +1,66 @@
-import React, { useEffect } from 'react';
-import { View } from 'react-native';
-import Svg, { Circle, Ellipse, Path, G } from 'react-native-svg';
-import Animated, {
-  useSharedValue,
-  useAnimatedProps,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { View, Animated } from 'react-native';
+import Svg, { Circle, Ellipse, Path } from 'react-native-svg';
 import { MascotProps, getMascotEmotion } from './types';
 import { theme } from '../../theme';
 
-const AnimatedG = Animated.createAnimatedComponent(G);
-
 export const Mascot: React.FC<MascotProps> = ({ size = 240, usagePercent }) => {
   const emotion = getMascotEmotion(usagePercent);
-  const rotation = useSharedValue(0);
-  const bounce = useSharedValue(0);
+  const bounceAnim = useRef(new Animated.Value(0)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // Gentle bounce animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounceAnim, {
+          toValue: -5,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounceAnim, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
     // Gentle sway animation
-    rotation.value = withRepeat(
-      withSequence(
-        withTiming(-3, { duration: 1500 }),
-        withTiming(3, { duration: 1500 })
-      ),
-      -1,
-      true
-    );
-
-    // Gentle bounce
-    bounce.value = withRepeat(
-      withSequence(
-        withTiming(-5, { duration: 1000 }),
-        withTiming(0, { duration: 1000 })
-      ),
-      -1,
-      true
-    );
-  }, [rotation, bounce]);
-
-  const animatedProps = useAnimatedProps(() => ({
-    transform: `rotate(${rotation.value}) translateY(${bounce.value})`,
-  }));
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(rotateAnim, {
+          toValue: -3,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnim, {
+          toValue: 3,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [bounceAnim, rotateAnim]);
 
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Svg width={size} height={size} viewBox="0 0 240 240">
-        {/* Shadow */}
-        <Ellipse cx="120" cy="220" rx="70" ry="8" fill="black" fillOpacity="0.1" />
+      <Animated.View
+        style={{
+          transform: [
+            { translateY: bounceAnim },
+            { rotate: rotateAnim.interpolate({
+                inputRange: [-3, 3],
+                outputRange: ['-3deg', '3deg'],
+              })
+            },
+          ],
+        }}
+      >
+        <Svg width={size} height={size} viewBox="0 0 240 240">
+          {/* Shadow */}
+          <Ellipse cx="120" cy="220" rx="70" ry="8" fill="black" fillOpacity="0.1" />
 
-        <AnimatedG animatedProps={animatedProps}>
           {/* Body */}
           <Circle cx="120" cy="140" r="60" fill={theme.colors.primary} />
 
@@ -117,8 +127,8 @@ export const Mascot: React.FC<MascotProps> = ({ size = 240, usagePercent }) => {
               fill="#60A5FA"
             />
           )}
-        </AnimatedG>
-      </Svg>
+        </Svg>
+      </Animated.View>
     </View>
   );
 };

@@ -5,11 +5,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { Card } from '../../components/ui/Card';
 import { ProgressBar } from '../../components/ui/ProgressBar';
-// Mascots temporarily disabled for testing
-// import { Mascot } from '../../components/mascots/Mascot';
-// import { WalletMascot } from '../../components/mascots/WalletMascot';
-// import { PiggyMascot } from '../../components/mascots/PiggyMascot';
-// import { CoinStackMascot } from '../../components/mascots/CoinStackMascot';
+import { Mascot } from '../../components/mascots/Mascot';
+import { WalletMascot } from '../../components/mascots/WalletMascot';
+import { PiggyMascot } from '../../components/mascots/PiggyMascot';
+import { CoinStackMascot } from '../../components/mascots/CoinStackMascot';
 import { WeekCalendar } from '../../components/WeekCalendar';
 import { TopOffendersCard } from './TopOffendersCard';
 import { useUiStore } from '../../stores/uiStore';
@@ -36,12 +35,17 @@ export const DashboardScreen: React.FC = () => {
   const usagePercent = mockDashboardData.currentHours / mockDashboardData.maxHours;
 
   const renderMascot = () => {
-    // Temporary placeholder - mascots disabled for testing
-    return (
-      <View style={{ width: 240, height: 240, backgroundColor: theme.colors.cream, borderRadius: 120, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 64 }}>🎯</Text>
-      </View>
-    );
+    const props = { size: 240, usagePercent };
+    switch (currentMascot) {
+      case 'wallet':
+        return <WalletMascot {...props} />;
+      case 'piggy':
+        return <PiggyMascot {...props} />;
+      case 'coinstack':
+        return <CoinStackMascot {...props} />;
+      default:
+        return <Mascot {...props} />;
+    }
   };
 
   return (

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { theme } from '../../theme';
+import { Mascot } from '../../components/mascots/Mascot';
 import { STAKE_OPTIONS } from '../../utils/constants';
 
 export const StakeStep: React.FC = () => {
@@ -8,9 +9,7 @@ export const StakeStep: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <View style={{ width: 200, height: 200, backgroundColor: theme.colors.cream, borderRadius: 100, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 80 }}>💰</Text>
-      </View>
+      <Mascot size={200} usagePercent={0.1} />
 
       <Text style={styles.title}>Choose Your Daily Stake</Text>
       <Text style={styles.subtitle}>

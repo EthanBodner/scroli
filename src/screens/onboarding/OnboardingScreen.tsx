@@ -26,15 +26,11 @@ export const OnboardingScreen: React.FC = () => {
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Complete onboarding
+      // Complete onboarding - the RootNavigator will automatically switch to Main
       completeOnboarding({
         id: '1',
         name: 'User',
         email: 'user@example.com',
-      });
-      (navigation as any).reset({
-        index: 0,
-        routes: [{ name: 'Main' }],
       });
     }
   };

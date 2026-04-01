@@ -1,13 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '../../theme';
+import { Mascot } from '../../components/mascots/Mascot';
 
 export const WelcomeStep: React.FC = () => {
   return (
     <View style={styles.container}>
-      <View style={{ width: 200, height: 200, backgroundColor: theme.colors.cream, borderRadius: 100, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 80 }}>👋</Text>
-      </View>
+      <Mascot size={200} usagePercent={0.2} />
 
       <Text style={styles.title}>Welcome to Scroly</Text>
       <Text style={styles.subtitle}>Put money on the line.{'\n'}Get your time back.</Text>

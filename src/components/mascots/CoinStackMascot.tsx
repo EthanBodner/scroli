@@ -1,75 +1,115 @@
-import React, { useEffect } from 'react';
-import { View } from 'react-native';
-import Svg, { Circle, Ellipse, Path, G } from 'react-native-svg';
-import Animated, {
-  useSharedValue,
-  useAnimatedProps,
-  withRepeat,
-  withSequence,
-  withTiming,
-  interpolate,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { View, Animated } from 'react-native';
+import Svg, { Circle, Ellipse, Path } from 'react-native-svg';
 import { MascotProps, getMascotEmotion } from './types';
 import { theme } from '../../theme';
 
-const AnimatedG = Animated.createAnimatedComponent(G);
 const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
 
 export const CoinStackMascot: React.FC<MascotProps> = ({ size = 240, usagePercent }) => {
   const emotion = getMascotEmotion(usagePercent);
-  const rotation = useSharedValue(0);
-  const bounce = useSharedValue(0);
+  const bounceAnim = useRef(new Animated.Value(0)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+
+  // Coin stack animations (collapse as usage increases)
+  const coin1Y = useRef(new Animated.Value(185)).current;
+  const coin2Y = useRef(new Animated.Value(175)).current;
+  const coin3Y = useRef(new Animated.Value(165)).current;
+  const coin1Opacity = useRef(new Animated.Value(1)).current;
+  const coin2Opacity = useRef(new Animated.Value(1)).current;
+  const coin3Opacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    rotation.value = withRepeat(
-      withSequence(
-        withTiming(-3, { duration: 1500 }),
-        withTiming(3, { duration: 1500 })
-      ),
-      -1,
-      true
-    );
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounceAnim, {
+          toValue: -5,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounceAnim, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
 
-    bounce.value = withRepeat(
-      withSequence(
-        withTiming(-5, { duration: 1000 }),
-        withTiming(0, { duration: 1000 })
-      ),
-      -1,
-      true
-    );
-  }, [rotation, bounce]);
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(rotateAnim, {
+          toValue: -3,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnim, {
+          toValue: 3,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
 
-  const animatedPropsGroup = useAnimatedProps(() => ({
-    transform: `rotate(${rotation.value}) translateY(${bounce.value})`,
-  }));
+    // Animate coin stack collapse based on usage
+    const targetCoin1Y = usagePercent > 0.3 ? 195 : 185;
+    const targetCoin2Y = usagePercent > 0.6 ? 195 : 175;
+    const targetCoin3Y = usagePercent > 0.9 ? 195 : 165;
 
-  // Coin stack collapses as usage increases
-  const coin1Offset = useAnimatedProps(() => ({
-    cy: interpolate(usagePercent, [0, 0.3], [185, 195]),
-    opacity: interpolate(usagePercent, [0, 0.3], [1, 0], 'clamp'),
-  }));
-
-  const coin2Offset = useAnimatedProps(() => ({
-    cy: interpolate(usagePercent, [0.3, 0.6], [175, 195]),
-    opacity: interpolate(usagePercent, [0.3, 0.6], [1, 0], 'clamp'),
-  }));
-
-  const coin3Offset = useAnimatedProps(() => ({
-    cy: interpolate(usagePercent, [0.6, 0.9], [165, 195]),
-    opacity: interpolate(usagePercent, [0.6, 0.9], [1, 0], 'clamp'),
-  }));
+    Animated.parallel([
+      Animated.timing(coin1Y, {
+        toValue: targetCoin1Y,
+        duration: 500,
+        useNativeDriver: false,
+      }),
+      Animated.timing(coin1Opacity, {
+        toValue: usagePercent > 0.3 ? 0 : 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(coin2Y, {
+        toValue: targetCoin2Y,
+        duration: 500,
+        useNativeDriver: false,
+      }),
+      Animated.timing(coin2Opacity, {
+        toValue: usagePercent > 0.6 ? 0 : 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(coin3Y, {
+        toValue: targetCoin3Y,
+        duration: 500,
+        useNativeDriver: false,
+      }),
+      Animated.timing(coin3Opacity, {
+        toValue: usagePercent > 0.9 ? 0 : 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [bounceAnim, rotateAnim, usagePercent, coin1Y, coin2Y, coin3Y, coin1Opacity, coin2Opacity, coin3Opacity]);
 
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Svg width={size} height={size} viewBox="0 0 240 240">
-        <Ellipse cx="120" cy="220" rx="70" ry="8" fill="black" fillOpacity="0.1" />
+      <Animated.View
+        style={{
+          transform: [
+            { translateY: bounceAnim },
+            { rotate: rotateAnim.interpolate({
+                inputRange: [-3, 3],
+                outputRange: ['-3deg', '3deg'],
+              })
+            },
+          ],
+        }}
+      >
+        <Svg width={size} height={size} viewBox="0 0 240 240">
+          <Ellipse cx="120" cy="220" rx="70" ry="8" fill="black" fillOpacity="0.1" />
 
-        <AnimatedG animatedProps={animatedPropsGroup}>
           {/* Coin stack - collapses as usage increases */}
-          <AnimatedEllipse cx="120" rx="30" ry="8" fill="#FBBF24" animatedProps={coin1Offset} />
-          <AnimatedEllipse cx="120" rx="30" ry="8" fill="#F59E0B" animatedProps={coin2Offset} />
-          <AnimatedEllipse cx="120" rx="30" ry="8" fill="#FBBF24" animatedProps={coin3Offset} />
+          <AnimatedEllipse cx="120" cy={coin1Y} rx="30" ry="8" fill="#FBBF24" opacity={coin1Opacity} />
+          <AnimatedEllipse cx="120" cy={coin2Y} rx="30" ry="8" fill="#F59E0B" opacity={coin2Opacity} />
+          <AnimatedEllipse cx="120" cy={coin3Y} rx="30" ry="8" fill="#FBBF24" opacity={coin3Opacity} />
           <Ellipse cx="120" cy="195" rx="30" ry="8" fill="#F59E0B" />
 
           {/* Mascot sitting on coins */}
@@ -107,8 +147,8 @@ export const CoinStackMascot: React.FC<MascotProps> = ({ size = 240, usagePercen
           {emotion === 'sad' && (
             <Path d="M110 132 Q120 125 130 132" stroke="#1F2937" strokeWidth="2" fill="none" />
           )}
-        </AnimatedG>
-      </Svg>
+        </Svg>
+      </Animated.View>
     </View>
   );
 };

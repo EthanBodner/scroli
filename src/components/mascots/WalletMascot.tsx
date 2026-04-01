@@ -1,72 +1,94 @@
-import React, { useEffect } from 'react';
-import { View } from 'react-native';
-import Svg, { Circle, Ellipse, Path, Rect, G } from 'react-native-svg';
-import Animated, {
-  useSharedValue,
-  useAnimatedProps,
-  withRepeat,
-  withSequence,
-  withTiming,
-  interpolate,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { View, Animated } from 'react-native';
+import Svg, { Circle, Ellipse, Path, Rect } from 'react-native-svg';
 import { MascotProps, getMascotEmotion } from './types';
 import { theme } from '../../theme';
 
-const AnimatedG = Animated.createAnimatedComponent(G);
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
 export const WalletMascot: React.FC<MascotProps> = ({ size = 240, usagePercent }) => {
   const emotion = getMascotEmotion(usagePercent);
-  const rotation = useSharedValue(0);
-  const bounce = useSharedValue(0);
+  const bounceAnim = useRef(new Animated.Value(0)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+
+  // Money opacity animations
+  const bill1Opacity = useRef(new Animated.Value(usagePercent < 0.3 ? 1 : 0)).current;
+  const bill2Opacity = useRef(new Animated.Value(usagePercent < 0.6 ? 1 : 0)).current;
+  const bill3Opacity = useRef(new Animated.Value(usagePercent < 0.9 ? 1 : 0)).current;
 
   useEffect(() => {
-    rotation.value = withRepeat(
-      withSequence(
-        withTiming(-3, { duration: 1500 }),
-        withTiming(3, { duration: 1500 })
-      ),
-      -1,
-      true
-    );
+    // Bounce and rotate animations
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounceAnim, {
+          toValue: -5,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounceAnim, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
 
-    bounce.value = withRepeat(
-      withSequence(
-        withTiming(-5, { duration: 1000 }),
-        withTiming(0, { duration: 1000 })
-      ),
-      -1,
-      true
-    );
-  }, [rotation, bounce]);
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(rotateAnim, {
+          toValue: -3,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnim, {
+          toValue: 3,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
 
-  const animatedPropsGroup = useAnimatedProps(() => ({
-    transform: `rotate(${rotation.value}) translateY(${bounce.value})`,
-  }));
+    // Animate money bills based on usage
+    Animated.timing(bill1Opacity, {
+      toValue: usagePercent < 0.3 ? 1 : 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
 
-  // Money bills opacity based on usage (more usage = fewer bills)
-  const bill1Opacity = useAnimatedProps(() => ({
-    opacity: interpolate(usagePercent, [0, 0.3], [1, 0], 'clamp'),
-  }));
+    Animated.timing(bill2Opacity, {
+      toValue: usagePercent < 0.6 ? 1 : 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
 
-  const bill2Opacity = useAnimatedProps(() => ({
-    opacity: interpolate(usagePercent, [0.3, 0.6], [1, 0], 'clamp'),
-  }));
-
-  const bill3Opacity = useAnimatedProps(() => ({
-    opacity: interpolate(usagePercent, [0.6, 0.9], [1, 0], 'clamp'),
-  }));
+    Animated.timing(bill3Opacity, {
+      toValue: usagePercent < 0.9 ? 1 : 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [bounceAnim, rotateAnim, usagePercent, bill1Opacity, bill2Opacity, bill3Opacity]);
 
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Svg width={size} height={size} viewBox="0 0 240 240">
-        <Ellipse cx="120" cy="220" rx="70" ry="8" fill="black" fillOpacity="0.1" />
+      <Animated.View
+        style={{
+          transform: [
+            { translateY: bounceAnim },
+            { rotate: rotateAnim.interpolate({
+                inputRange: [-3, 3],
+                outputRange: ['-3deg', '3deg'],
+              })
+            },
+          ],
+        }}
+      >
+        <Svg width={size} height={size} viewBox="0 0 240 240">
+          <Ellipse cx="120" cy="220" rx="70" ry="8" fill="black" fillOpacity="0.1" />
 
-        <AnimatedG animatedProps={animatedPropsGroup}>
           {/* Wallet body */}
           <Rect x="80" y="160" width="80" height="50" rx="8" fill="#8B4513" />
 
-          {/* Money bills */}
+          {/* Money bills - animated */}
           <AnimatedRect
             x="85"
             y="140"
@@ -74,7 +96,7 @@ export const WalletMascot: React.FC<MascotProps> = ({ size = 240, usagePercent }
             height="25"
             rx="4"
             fill="#10B981"
-            animatedProps={bill1Opacity}
+            opacity={bill1Opacity}
           />
           <AnimatedRect
             x="90"
@@ -83,7 +105,7 @@ export const WalletMascot: React.FC<MascotProps> = ({ size = 240, usagePercent }
             height="25"
             rx="4"
             fill="#10B981"
-            animatedProps={bill2Opacity}
+            opacity={bill2Opacity}
           />
           <AnimatedRect
             x="95"
@@ -92,7 +114,7 @@ export const WalletMascot: React.FC<MascotProps> = ({ size = 240, usagePercent }
             height="25"
             rx="4"
             fill="#10B981"
-            animatedProps={bill3Opacity}
+            opacity={bill3Opacity}
           />
 
           {/* Mascot face */}
@@ -130,8 +152,8 @@ export const WalletMascot: React.FC<MascotProps> = ({ size = 240, usagePercent }
           {emotion === 'sad' && (
             <Path d="M110 115 Q120 108 130 115" stroke="#1F2937" strokeWidth="2" fill="none" />
           )}
-        </AnimatedG>
-      </Svg>
+        </Svg>
+      </Animated.View>
     </View>
   );
 };

@@ -1,14 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '../../theme';
+import { Mascot } from '../../components/mascots/Mascot';
 import { MAX_DAILY_HOURS } from '../../utils/constants';
 
 export const GoalStep: React.FC = () => {
   return (
     <View style={styles.container}>
-      <View style={{ width: 200, height: 200, backgroundColor: theme.colors.cream, borderRadius: 100, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 80 }}>🎯</Text>
-      </View>
+      <Mascot size={200} usagePercent={0.5} />
 
       <Text style={styles.title}>Set Your Daily Goal</Text>
       <Text style={styles.subtitle}>We recommend starting with</Text>
