@@ -14,12 +14,9 @@ import { TopOffendersCard } from './TopOffendersCard';
 import { useUiStore } from '../../stores/uiStore';
 import { formatTime } from '../../utils/formatters';
 import { MAX_DAILY_HOURS } from '../../utils/constants';
+import { useScreenTime } from '../../hooks/useScreenTime';
 
-// Mock data
-const mockDashboardData = {
-  currentHours: 2.3,
-  maxHours: MAX_DAILY_HOURS,
-  screenTimeToday: formatTime(2.3 * 60),
+const MOCK = {
   atStake: 5,
   currentStreak: 6,
   weekHistory: ['check', 'check', 'miss', 'check', 'check', 'check', 'future'] as Array<'check' | 'miss' | 'future'>,
@@ -32,7 +29,11 @@ const mockDashboardData = {
 
 export const DashboardScreen: React.FC = () => {
   const { currentMascot } = useUiStore();
-  const usagePercent = mockDashboardData.currentHours / mockDashboardData.maxHours;
+  const { hoursToday, permissionGranted, loading } = useScreenTime();
+
+  // Fall back to 0 while loading or if permission denied
+  const currentHours = permissionGranted ? hoursToday : 0;
+  const usagePercent = Math.min(currentHours / MAX_DAILY_HOURS, 1);
 
   const renderMascot = () => {
     const props = { size: 240, usagePercent };
@@ -64,7 +65,7 @@ export const DashboardScreen: React.FC = () => {
 
         {/* Current Hours */}
         <Text style={styles.displayNumber}>
-          {mockDashboardData.currentHours.toFixed(1)}
+          {loading ? '…' : currentHours.toFixed(1)}
         </Text>
         <Text style={styles.hoursLabel}>hours today</Text>
 
@@ -75,7 +76,7 @@ export const DashboardScreen: React.FC = () => {
 
         <View style={styles.progressLabels}>
           <Text style={styles.progressLabel}>0</Text>
-          <Text style={styles.progressLabel}>{mockDashboardData.maxHours}h goal</Text>
+          <Text style={styles.progressLabel}>{MAX_DAILY_HOURS}h goal</Text>
         </View>
 
         {/* Status Card */}
@@ -83,13 +84,13 @@ export const DashboardScreen: React.FC = () => {
           <View style={styles.statusRow}>
             <View style={styles.statusItem}>
               <Text style={styles.statusLabel}>Screen Time Today</Text>
-              <Text style={styles.statusValue}>{mockDashboardData.screenTimeToday}</Text>
+              <Text style={styles.statusValue}>{formatTime(currentHours * 60)}</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.statusItem}>
               <Text style={styles.statusLabel}>At Stake</Text>
               <Text style={[styles.statusValue, styles.statusValueStake]}>
-                ${mockDashboardData.atStake}
+                ${MOCK.atStake}
               </Text>
             </View>
           </View>
@@ -100,18 +101,18 @@ export const DashboardScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>Current Streak</Text>
           <View style={styles.streakContainer}>
             <Text style={styles.streakEmojis}>🔥🔥🔥</Text>
-            <Text style={styles.streakText}>{mockDashboardData.currentStreak} days</Text>
+            <Text style={styles.streakText}>{MOCK.currentStreak} days</Text>
           </View>
         </View>
 
         {/* Week Calendar */}
         <View style={styles.weekSection}>
           <Text style={styles.sectionTitle}>This Week</Text>
-          <WeekCalendar weekHistory={mockDashboardData.weekHistory} />
+          <WeekCalendar weekHistory={MOCK.weekHistory} />
         </View>
 
         {/* Top Offenders */}
-        <TopOffendersCard offenders={mockDashboardData.topOffenders} />
+        <TopOffendersCard offenders={MOCK.topOffenders} />
       </ScrollView>
     </SafeAreaView>
   );

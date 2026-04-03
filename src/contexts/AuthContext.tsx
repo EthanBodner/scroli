@@ -34,7 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data) {
-        setHasCompletedOnboarding(data.has_completed_onboarding === true || data.has_completed_onboarding === 'true');
+        setHasCompletedOnboarding(data.has_completed_onboarding === true);
       }
     } catch (err) {
       console.error('Unexpected error fetching profile:', err);

@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       profiles: {
@@ -37,6 +37,7 @@ export interface Database {
           website?: string | null
           has_completed_onboarding?: boolean
         }
+        Relationships: []
       }
       goals: {
         Row: {
@@ -63,6 +64,7 @@ export interface Database {
           is_active?: boolean
           created_at?: string
         }
+        Relationships: []
       }
       wallet_balances: {
         Row: {
@@ -86,6 +88,7 @@ export interface Database {
           currency?: string
           updated_at?: string
         }
+        Relationships: []
       }
       daily_records: {
         Row: {
@@ -112,6 +115,7 @@ export interface Database {
           goal_id?: string | null
           status?: 'success' | 'failure' | 'pending'
         }
+        Relationships: []
       }
       transactions: {
         Row: {
@@ -138,6 +142,7 @@ export interface Database {
           charity_id?: string | null
           created_at?: string
         }
+        Relationships: []
       }
       charities: {
         Row: {
@@ -164,6 +169,7 @@ export interface Database {
           website_url?: string | null
           is_active?: boolean
         }
+        Relationships: []
       }
     }
     Views: {
@@ -173,6 +179,9 @@ export interface Database {
       [_ in never]: never
     }
     Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
       [_ in never]: never
     }
   }
