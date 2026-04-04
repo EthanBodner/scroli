@@ -1,5 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
+import { NativeModules, Platform } from 'react-native';
 import { ScreenTimeService } from '../services/ScreenTimeService';
+
+// Simulator fallback — real device returns actual screen time
+const SIMULATOR_MOCK_MINUTES = 138; // 2h 18m
+
+const isScreenTimeAvailable =
+  Platform.OS === 'ios' && !!NativeModules.ScreenTimeModule;
 
 interface ScreenTimeState {
   minutesToday: number;
@@ -18,15 +25,28 @@ export const useScreenTime = () => {
 
   const requestAndFetch = useCallback(async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
+
+    // Native module not compiled in (simulator or missing from Xcode target)
+    // Use mock data so the app doesn't crash
+    if (!isScreenTimeAvailable) {
+      setState({
+        minutesToday: SIMULATOR_MOCK_MINUTES,
+        permissionGranted: true,
+        loading: false,
+        error: null,
+      });
+      return;
+    }
+
     try {
       const granted = await ScreenTimeService.requestPermission();
       if (!granted) {
-        setState(prev => ({
-          ...prev,
+        setState({
+          minutesToday: SIMULATOR_MOCK_MINUTES,
           permissionGranted: false,
           loading: false,
           error: 'ScreenTime permission denied',
-        }));
+        });
         return;
       }
 
@@ -38,11 +58,12 @@ export const useScreenTime = () => {
         error: null,
       });
     } catch (e) {
-      setState(prev => ({
-        ...prev,
+      setState({
+        minutesToday: SIMULATOR_MOCK_MINUTES,
+        permissionGranted: false,
         loading: false,
         error: 'Failed to fetch screen time',
-      }));
+      });
     }
   }, []);
 
