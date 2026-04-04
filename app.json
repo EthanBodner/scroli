@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "scroly",
-    "slug": "scroly",
+    "name": "scroli",
+    "slug": "scroli",
     "version": "1.0.0",
     "orientation": "portrait",
     "entryPoint": "index.ts",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.scroly"
+      "bundleIdentifier": "com.anonymous.scroli"
     },
     "android": {
       "adaptiveIcon": {
@@ -26,6 +26,15 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.scroli",
+          "enableGooglePay": false
+        }
+      ]
+    ]
   }
 }

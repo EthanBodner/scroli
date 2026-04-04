@@ -12,9 +12,11 @@ import { CoinStackMascot } from '../../components/mascots/CoinStackMascot';
 import { WeekCalendar } from '../../components/WeekCalendar';
 import { TopOffendersCard } from './TopOffendersCard';
 import { useUiStore } from '../../stores/uiStore';
+import { useAuth } from '../../contexts/AuthContext';
 import { formatTime } from '../../utils/formatters';
 import { MAX_DAILY_HOURS } from '../../utils/constants';
 import { useScreenTime } from '../../hooks/useScreenTime';
+import { TrackingService } from '../../services/TrackingService';
 
 const MOCK = {
   atStake: 5,
@@ -29,11 +31,19 @@ const MOCK = {
 
 export const DashboardScreen: React.FC = () => {
   const { currentMascot } = useUiStore();
-  const { hoursToday, permissionGranted, loading } = useScreenTime();
+  const { user } = useAuth();
+  const { hoursToday, minutesToday, permissionGranted, loading } = useScreenTime();
 
   // Fall back to 0 while loading or if permission denied
   const currentHours = permissionGranted ? hoursToday : 0;
   const usagePercent = Math.min(currentHours / MAX_DAILY_HOURS, 1);
+
+  // Save daily record whenever we have real screen time data
+  React.useEffect(() => {
+    if (user && permissionGranted && minutesToday > 0) {
+      TrackingService.saveDailyRecord(user.id, minutesToday).catch(console.error);
+    }
+  }, [user, permissionGranted, minutesToday]);
 
   const renderMascot = () => {
     const props = { size: 240, usagePercent };

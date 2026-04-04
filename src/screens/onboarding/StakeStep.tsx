@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { theme } from '../../theme';
 import { Mascot } from '../../components/mascots/Mascot';
 import { STAKE_OPTIONS } from '../../utils/constants';
+import { useOnboardingStore } from '../../stores/onboardingStore';
 
 export const StakeStep: React.FC = () => {
-  const [selectedStake, setSelectedStake] = useState(5);
+  const { stakeAmount, setStakeAmount: setSelectedStake } = useOnboardingStore();
+  const selectedStake = stakeAmount;
 
   return (
     <View style={styles.container}>

@@ -7,13 +7,16 @@ import { GoalStep } from './GoalStep';
 import { StakeStep } from './StakeStep';
 import { Button } from '../../components/ui/Button';
 import { useAuthStore } from '../../stores/authStore';
+import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
+import { TrackingService } from '../../services/TrackingService';
 import { showAlert } from '../../utils/alert';
 
 export const OnboardingScreen: React.FC = () => {
   const { user } = useAuth();
   const { completeOnboarding } = useAuthStore();
+  const { dailyGoalHours, stakeAmount } = useOnboardingStore();
   const [currentStep, setCurrentStep] = useState(0);
 
   const steps = [WelcomeStep, GoalStep, StakeStep];
@@ -26,23 +29,25 @@ export const OnboardingScreen: React.FC = () => {
     } else {
       if (user) {
         try {
+          // Save goal to Supabase
+          await TrackingService.saveGoal(user.id, Math.round(dailyGoalHours * 60));
+
+          // Mark onboarding complete in profiles
           const { error } = await supabase
             .from('profiles')
             .update({ has_completed_onboarding: true })
             .eq('id', user.id);
 
           if (error) {
-            console.error('Error saving onboarding status:', error);
-            showAlert('Wait...', 'We couldn\'t save your progress. Please try again.');
+            showAlert('Wait...', "We couldn't save your progress. Please try again.");
             return;
           }
         } catch (err) {
           console.error('Error in onboarding completion:', err);
+          showAlert('Wait...', "We couldn't save your progress. Please try again.");
+          return;
         }
       }
-
-      // Complete onboarding in local state — RootNavigator will
-      // automatically switch to Main now that it's persisted/synced
       completeOnboarding();
     }
   };

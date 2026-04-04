@@ -4,8 +4,11 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { StripeProvider } from '@stripe/stripe-react-native';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
+
+const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
 
 const queryClient = new QueryClient();
 
@@ -30,15 +33,20 @@ const AppContent = () => {
 
 export const App = () => {
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClient}>
-        <SafeAreaProvider>
-          <NavigationContainer>
-            <AppContent />
-          </NavigationContainer>
-        </SafeAreaProvider>
-      </QueryClientProvider>
-    </AuthProvider>
+    <StripeProvider
+      publishableKey={STRIPE_PUBLISHABLE_KEY}
+      merchantIdentifier="merchant.com.scroli"
+    >
+      <AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <SafeAreaProvider>
+            <NavigationContainer>
+              <AppContent />
+            </NavigationContainer>
+          </SafeAreaProvider>
+        </QueryClientProvider>
+      </AuthProvider>
+    </StripeProvider>
   );
 };
 
