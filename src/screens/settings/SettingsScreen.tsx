@@ -1,21 +1,27 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../theme';
 import { useAuth } from '../../contexts/AuthContext';
-import { useAuthStore } from '../../stores/authStore';
+import { useOnboardingStore } from '../../stores/onboardingStore';
+import type { RootStackParamList } from '../../navigation/types';
+
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 interface SettingItemProps {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   subtitle?: string;
   onPress: () => void;
+  last?: boolean;
 }
 
-const SettingItem: React.FC<SettingItemProps> = ({ icon, title, subtitle, onPress }) => {
+const SettingItem: React.FC<SettingItemProps> = ({ icon, title, subtitle, onPress, last }) => {
   return (
-    <Pressable style={styles.settingItem} onPress={onPress}>
+    <Pressable style={[styles.settingItem, last && styles.settingItemLast]} onPress={onPress}>
       <View style={styles.settingLeft}>
         <Ionicons name={icon} size={24} color={theme.colors.primary} />
         <View style={styles.settingText}>
@@ -29,25 +35,21 @@ const SettingItem: React.FC<SettingItemProps> = ({ icon, title, subtitle, onPres
 };
 
 export const SettingsScreen: React.FC = () => {
+  const navigation = useNavigation<Nav>();
   const { signOut } = useAuth();
-  const { reset } = useAuthStore();
+  const { dailyGoalHours, stakeAmount } = useOnboardingStore();
 
   const handleSignOut = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to sign out?')) {
+        signOut();
+      }
+    } else {
+      Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
         { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            reset();
-            await signOut();
-          },
-        },
-      ],
-    );
+        { text: 'Sign Out', style: 'destructive', onPress: () => signOut() },
+      ]);
+    }
   };
 
   return (
@@ -61,20 +63,15 @@ export const SettingsScreen: React.FC = () => {
             <SettingItem
               icon="time-outline"
               title="Daily Goal"
-              subtitle="3.0 hours"
-              onPress={() => {}}
+              subtitle={`${dailyGoalHours.toFixed(1)} hours`}
+              onPress={() => navigation.navigate('GoalSettings')}
             />
             <SettingItem
               icon="cash-outline"
               title="Daily Stake"
-              subtitle="$5.00"
-              onPress={() => {}}
-            />
-            <SettingItem
-              icon="happy-outline"
-              title="Mascot Lab"
-              subtitle="Choose your mascot"
-              onPress={() => {}}
+              subtitle={`$${stakeAmount}.00`}
+              onPress={() => navigation.navigate('StakeSettings')}
+              last
             />
           </View>
         </View>
@@ -93,6 +90,7 @@ export const SettingsScreen: React.FC = () => {
               title="Email Updates"
               subtitle="Weekly progress reports"
               onPress={() => {}}
+              last
             />
           </View>
         </View>
@@ -108,14 +106,15 @@ export const SettingsScreen: React.FC = () => {
             />
             <SettingItem
               icon="heart-outline"
-              title="Charity Selection"
+              title="Charity"
               subtitle="Choose where donations go"
-              onPress={() => {}}
+              onPress={() => navigation.navigate('CharitySettings')}
             />
             <SettingItem
               icon="shield-checkmark-outline"
               title="Privacy & Security"
               onPress={() => {}}
+              last
             />
           </View>
         </View>
@@ -125,7 +124,12 @@ export const SettingsScreen: React.FC = () => {
           <View style={styles.settingsList}>
             <SettingItem icon="help-circle-outline" title="Help & Support" onPress={() => {}} />
             <SettingItem icon="document-text-outline" title="Terms of Service" onPress={() => {}} />
-            <SettingItem icon="information-circle-outline" title="About Scroly" onPress={() => {}} />
+            <SettingItem
+              icon="information-circle-outline"
+              title="About Scroli"
+              onPress={() => {}}
+              last
+            />
           </View>
         </View>
 
@@ -175,6 +179,9 @@ const styles = StyleSheet.create({
     padding: theme.spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
+  },
+  settingItemLast: {
+    borderBottomWidth: 0,
   },
   settingLeft: {
     flexDirection: 'row',

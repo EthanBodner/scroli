@@ -14,6 +14,9 @@ export type RootStackParamList = {
   Onboarding: undefined;
   Main: NavigatorScreenParams<MainTabParamList>;
   ImpactFlow: undefined;
+  GoalSettings: undefined;
+  StakeSettings: undefined;
+  CharitySettings: undefined;
 };
 
 declare global {

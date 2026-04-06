@@ -6,6 +6,9 @@ import { OnboardingScreen } from '../screens/onboarding/OnboardingScreen';
 import { ImpactFlowScreen } from '../screens/impact/ImpactFlowScreen';
 import { SignInScreen } from '../screens/SignInScreen';
 import { SignUpScreen } from '../screens/SignUpScreen';
+import { GoalScreen } from '../screens/settings/GoalScreen';
+import { StakeScreen } from '../screens/settings/StakeScreen';
+import { CharityScreen } from '../screens/settings/CharityScreen';
 import { useAuth } from '../contexts/AuthContext';
 import { useAuthStore } from '../stores/authStore';
 
@@ -22,22 +25,19 @@ export const RootNavigator: React.FC = () => {
       }}
     >
       {!user ? (
-        // Not signed in — show auth screens
         <>
           <Stack.Screen name="SignIn" component={SignInScreen} />
           <Stack.Screen name="SignUp" component={SignUpScreen} />
         </>
       ) : !hasCompletedOnboarding ? (
-        // Signed in but new user — show onboarding
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       ) : (
-        // Signed in and returning user — show main app
         <>
           <Stack.Screen name="Main" component={MainNavigator} />
-          <Stack.Screen
-            name="ImpactFlow"
-            component={ImpactFlowScreen}
-          />
+          <Stack.Screen name="ImpactFlow" component={ImpactFlowScreen} />
+          <Stack.Screen name="GoalSettings" component={GoalScreen} />
+          <Stack.Screen name="StakeSettings" component={StakeScreen} />
+          <Stack.Screen name="CharitySettings" component={CharityScreen} />
         </>
       )}
     </Stack.Navigator>

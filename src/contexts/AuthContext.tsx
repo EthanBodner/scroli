@@ -68,6 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('onAuthStateChange fired:', _event, session?.user?.id);
       setSession(session);
       if (session?.user) {
+        setLoading(true);
         fetchProfile(session.user.id).finally(() => {
           setLoading(false);
         });

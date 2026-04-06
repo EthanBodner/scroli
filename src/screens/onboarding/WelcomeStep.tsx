@@ -1,15 +1,22 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '../../theme';
-import { Mascot } from '../../components/mascots/Mascot';
+import { ScroliLogo, WaveIcon } from '../../components/ScroliLogo';
 
 export const WelcomeStep: React.FC = () => {
   return (
     <View style={styles.container}>
-      <Mascot size={200} usagePercent={0.2} />
+      {/* Large icon */}
+      <View style={styles.iconWrapper}>
+        <ScroliLogo variant="icon" size="lg" />
+      </View>
 
-      <Text style={styles.title}>Welcome to Scroly</Text>
-      <Text style={styles.subtitle}>Put money on the line.{'\n'}Get your time back.</Text>
+      {/* Full wordmark */}
+      <ScroliLogo variant="full" size="lg" />
+
+      <Text style={styles.subtitle}>
+        Put money on the line.{'\n'}Get your time back.
+      </Text>
 
       <View style={styles.disclaimerContainer}>
         <Text style={styles.disclaimer}>No money is taken yet</Text>
@@ -25,18 +32,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: theme.spacing.md,
   },
-  title: {
-    fontSize: theme.typography.fontSize.h1,
-    fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.text.primary,
-    marginTop: theme.spacing.lg,
-    textAlign: 'center',
+  iconWrapper: {
+    marginBottom: theme.spacing.lg,
+    ...theme.shadows.lg,
   },
   subtitle: {
     fontSize: theme.typography.fontSize.h3,
-    fontWeight: theme.typography.fontWeight.regular,
+    fontFamily: theme.typography.fontFamily.regular,
     color: theme.colors.text.secondary,
-    marginTop: theme.spacing.sm,
+    marginTop: theme.spacing.md,
     textAlign: 'center',
     lineHeight: theme.typography.fontSize.h3 * theme.typography.lineHeight.relaxed,
   },
@@ -49,6 +53,7 @@ const styles = StyleSheet.create({
   },
   disclaimer: {
     fontSize: theme.typography.fontSize.small,
+    fontFamily: theme.typography.fontFamily.regular,
     color: theme.colors.text.secondary,
     textAlign: 'center',
   },

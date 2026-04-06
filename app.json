@@ -28,7 +28,8 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "./plugins/withScreenTime"
+      "./plugins/withScreenTime",
+      "expo-font"
     ]
   }
 }

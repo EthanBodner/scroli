@@ -4,8 +4,17 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+  Poppins_800ExtraBold,
+} from '@expo-google-fonts/poppins';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { colors } from './src/theme/colors';
 
 const queryClient = new QueryClient();
 
@@ -15,7 +24,7 @@ const AppContent = () => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size={36} color="#7C3AED" />
+        <ActivityIndicator size={36} color={colors.primary} />
       </View>
     );
   }
@@ -29,6 +38,22 @@ const AppContent = () => {
 };
 
 export const App = () => {
+  const [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+    Poppins_800ExtraBold,
+  });
+
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size={36} color={colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
@@ -50,5 +75,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
 });
-export default App;
 
+export default App;

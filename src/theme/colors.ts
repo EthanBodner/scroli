@@ -1,12 +1,13 @@
 export const colors = {
-  // Primary brand colors
-  primary: '#7C3AED',
-  primaryDark: '#6D28D9',
-  primaryLight: '#A78BFA',
+  // Primary brand colors — coral from Scroli logo
+  primary: '#E8706A',
+  primaryDark: '#D4534D',
+  primaryLight: '#F0948F',
+  primaryFaded: '#FDECEA',
 
   // Background colors
   background: '#FFFFFF',
-  cream: '#F5F1E8',
+  cream: '#F5F6FA',      // light blue-grey from logo card background
 
   // Status colors
   success: '#10B981',
@@ -31,7 +32,7 @@ export const colors = {
 
   // Gradient colors
   gradient: {
-    start: '#7C3AED',
-    end: '#EC4899',
+    start: '#E8706A',
+    end: '#F0948F',
   },
 } as const;

@@ -5,6 +5,7 @@ import { theme } from '../../theme';
 import { WelcomeStep } from './WelcomeStep';
 import { GoalStep } from './GoalStep';
 import { StakeStep } from './StakeStep';
+import { CharityStep } from './CharityStep';
 import { Button } from '../../components/ui/Button';
 import { useAuthStore } from '../../stores/authStore';
 import { useOnboardingStore } from '../../stores/onboardingStore';
@@ -16,10 +17,10 @@ import { showAlert } from '../../utils/alert';
 export const OnboardingScreen: React.FC = () => {
   const { user } = useAuth();
   const { completeOnboarding } = useAuthStore();
-  const { dailyGoalHours, stakeAmount } = useOnboardingStore();
+  const { dailyGoalHours, stakeAmount, charityId } = useOnboardingStore();
   const [currentStep, setCurrentStep] = useState(0);
 
-  const steps = [WelcomeStep, GoalStep, StakeStep];
+  const steps = [WelcomeStep, GoalStep, StakeStep, CharityStep];
   const totalSteps = steps.length;
   const CurrentStepComponent = steps[currentStep];
 
@@ -29,13 +30,18 @@ export const OnboardingScreen: React.FC = () => {
     } else {
       if (user) {
         try {
-          // Save goal to Supabase
           await TrackingService.saveGoal(user.id, Math.round(dailyGoalHours * 60));
 
-          // Mark onboarding complete in profiles
+          const profileUpdate: Record<string, unknown> = {
+            has_completed_onboarding: true,
+          };
+          if (charityId) {
+            profileUpdate.default_charity_id = charityId;
+          }
+
           const { error } = await supabase
             .from('profiles')
-            .update({ has_completed_onboarding: true })
+            .update(profileUpdate)
             .eq('id', user.id);
 
           if (error) {
@@ -57,6 +63,9 @@ export const OnboardingScreen: React.FC = () => {
       setCurrentStep(currentStep - 1);
     }
   };
+
+  // Disable Next on charity step if nothing selected yet
+  const nextDisabled = currentStep === 3 && !charityId;
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -86,6 +95,7 @@ export const OnboardingScreen: React.FC = () => {
             onPress={handleNext}
             variant="primary"
             style={styles.button}
+            disabled={nextDisabled}
           />
         </View>
       </View>
