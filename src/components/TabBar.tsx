@@ -10,41 +10,20 @@ import { RootStackParamList } from '../navigation/types';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const getIconName = (routeName: string, focused: boolean): keyof typeof Ionicons.glyphMap => {
-  switch (routeName) {
-    case 'Dashboard':
-      return focused ? 'home' : 'home-outline';
-    case 'Stats':
-      return focused ? 'stats-chart' : 'stats-chart-outline';
-    case 'Profile':
-      return focused ? 'person' : 'person-outline';
-    case 'Settings':
-      return focused ? 'settings' : 'settings-outline';
-    default:
-      return 'home-outline';
-  }
+const TAB_CONFIG: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap; iconFocused: keyof typeof Ionicons.glyphMap }> = {
+  Dashboard: { label: 'Home', icon: 'home-outline', iconFocused: 'home' },
+  Stats:     { label: 'Stats', icon: 'stats-chart-outline', iconFocused: 'stats-chart' },
+  Profile:   { label: 'You', icon: 'person-outline', iconFocused: 'person' },
+  Settings:  { label: 'More', icon: 'menu-outline', iconFocused: 'menu' },
 };
 
 export const TabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
   const insets = useSafeAreaInsets();
   const rootNavigation = useNavigation<NavigationProp>();
 
-  const handleCenterPress = () => {
-    rootNavigation.navigate('ImpactFlow');
-  };
-
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          paddingBottom: insets.bottom,
-          height: 64 + insets.bottom,
-        },
-      ]}
-    >
+    <View style={[styles.container, { paddingBottom: insets.bottom, height: 68 + insets.bottom }]}>
       {state.routes.map((route, index) => {
-        const { options } = descriptors[route.key];
         const isFocused = state.index === index;
         const isCenter = route.name === 'Center';
 
@@ -52,47 +31,35 @@ export const TabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, naviga
           return (
             <Pressable
               key={route.key}
-              style={styles.centerButton}
-              onPress={handleCenterPress}
+              style={styles.centerWrap}
+              onPress={() => rootNavigation.navigate('ImpactFlow')}
             >
-              <View style={styles.centerButtonInner}>
-                <Ionicons name="hourglass" size={28} color={theme.colors.text.white} />
+              <View style={styles.centerButton}>
+                <Ionicons name="hourglass" size={26} color={theme.colors.text.white} />
               </View>
+              <Text style={styles.centerLabel}>Check In</Text>
             </Pressable>
           );
         }
 
-        const onPress = () => {
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          });
-
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
-          }
-        };
+        const config = TAB_CONFIG[route.name] ?? { label: route.name, icon: 'home-outline', iconFocused: 'home' };
 
         return (
           <Pressable
             key={route.key}
-            onPress={onPress}
+            onPress={() => {
+              const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+              if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name);
+            }}
             style={styles.tab}
           >
             <Ionicons
-              name={getIconName(route.name, isFocused)}
-              size={24}
+              name={isFocused ? config.iconFocused : config.icon}
+              size={22}
               color={isFocused ? theme.colors.primary : theme.colors.text.light}
             />
-            <Text
-              style={[
-                styles.label,
-                { color: isFocused ? theme.colors.primary : theme.colors.text.light },
-                isFocused && styles.labelFocused,
-              ]}
-            >
-              {route.name}
+            <Text style={[styles.label, isFocused && styles.labelFocused]}>
+              {config.label}
             </Text>
           </Pressable>
         );
@@ -107,35 +74,43 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.card,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
-    paddingTop: theme.spacing.xs,
+    paddingTop: 8,
     ...theme.shadows.lg,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
+    gap: 3,
   },
   label: {
-    fontSize: theme.typography.fontSize.tiny,
-    fontWeight: theme.typography.fontWeight.regular,
+    fontSize: 10,
+    fontFamily: theme.typography.fontFamily.regular,
+    color: theme.colors.text.light,
   },
   labelFocused: {
-    fontWeight: theme.typography.fontWeight.medium,
+    fontFamily: theme.typography.fontFamily.semibold,
+    color: theme.colors.primary,
   },
-  centerButton: {
+  centerWrap: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'flex-start',
+    gap: 3,
   },
-  centerButtonInner: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  centerButton: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -28,
+    marginTop: -26,
     ...theme.shadows.md,
+  },
+  centerLabel: {
+    fontSize: 10,
+    fontFamily: theme.typography.fontFamily.semibold,
+    color: theme.colors.primary,
   },
 });

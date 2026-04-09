@@ -15,10 +15,11 @@ import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useAuth } from '../../contexts/AuthContext';
 import { ScroliLogo } from '../../components/ScroliLogo';
 import { formatTime } from '../../utils/formatters';
-import { MAX_DAILY_HOURS, MascotType } from '../../utils/constants';
+import { MascotType } from '../../utils/constants';
 import { useScreenTime } from '../../hooks/useScreenTime';
 import { TrackingService } from '../../services/TrackingService';
 import { getMascotForCharity } from '../../utils/charityMascots';
+import { getPeriodLabel } from '../../utils/goalPeriod';
 import { supabase } from '../../services/supabase';
 
 type DayStatus = 'check' | 'miss' | 'future';
@@ -77,25 +78,31 @@ export const DashboardScreen: React.FC = () => {
   const [weekHistory, setWeekHistory] = useState<DayStatus[]>(Array(7).fill('future'));
   const [streak, setStreak] = useState(0);
   const [activeMascot, setActiveMascot] = useState<MascotType>('original');
+  const [charityName, setCharityName] = useState<string | null>(null);
+  const [periodType, setPeriodType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [periodLimitMinutes, setPeriodLimitMinutes] = useState(180);
+  const [periodUsageMinutes, setPeriodUsageMinutes] = useState(0);
 
   const currentHours = permissionGranted ? hoursToday : 0;
-  const usagePercent = Math.min(currentHours / MAX_DAILY_HOURS, 1);
+  const periodLimitHours = periodLimitMinutes / 60;
+  const periodUsageHours = periodUsageMinutes / 60;
+  const usagePercent = Math.min(periodUsageHours / periodLimitHours, 1);
+  const periodLabel = getPeriodLabel(periodType);
+  const streakToBonus = 7 - (streak % 7);
 
   const fetchWeekData = useCallback(async () => {
     if (!user) return;
     try {
-      const [records, profileRes] = await Promise.all([
-        TrackingService.getRecentRecords(user.id, 14),
-        supabase
-          .from('profiles')
-          .select('default_charity_id, charities(name)')
-          .eq('id', user.id)
-          .single(),
+      const [records, profileRes, goal] = await Promise.all([
+        TrackingService.getRecentRecords(user.id, 35),
+        supabase.from('profiles').select('default_charity_id, charities(name)').eq('id', user.id).single(),
+        TrackingService.getActiveGoal(user.id),
       ]);
 
       const today = new Date().toISOString().split('T')[0];
       const weekDates = getWeekDates(new Date());
       const recordMap = new Map(records.map((r) => [r.date, r.status]));
+      const durationMap = new Map(records.map((r) => [r.date, r.duration_minutes]));
 
       const history: DayStatus[] = weekDates.map((date) => {
         if (date >= today) return 'future';
@@ -106,12 +113,35 @@ export const DashboardScreen: React.FC = () => {
       setWeekHistory(history);
       setStreak(computeStreak(records, today));
 
-      const charityName = (profileRes.data?.charities as any)?.name ?? null;
-      setActiveMascot(getMascotForCharity(charityName));
+      const resolvedCharityName = (profileRes.data?.charities as any)?.name ?? null;
+      setCharityName(resolvedCharityName);
+      setActiveMascot(getMascotForCharity(resolvedCharityName));
+
+      // Period usage
+      const pt = (goal?.period_type ?? 'daily') as 'daily' | 'weekly' | 'monthly';
+      setPeriodType(pt);
+      setPeriodLimitMinutes(goal?.daily_limit_minutes ?? 180);
+
+      if (pt === 'weekly') {
+        const weekTotal = weekDates.reduce((sum, d) => sum + (durationMap.get(d) ?? 0), 0);
+        setPeriodUsageMinutes(weekTotal);
+      } else if (pt === 'monthly') {
+        const now = new Date();
+        let monthTotal = 0;
+        records.forEach((r) => {
+          const d = new Date(r.date);
+          if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+            monthTotal += r.duration_minutes;
+          }
+        });
+        setPeriodUsageMinutes(monthTotal);
+      } else {
+        setPeriodUsageMinutes(minutesToday);
+      }
     } catch (err) {
       console.error('Failed to fetch week data:', err);
     }
-  }, [user]);
+  }, [user, minutesToday]);
 
   // Save daily record + fetch week data on mount
   useEffect(() => {
@@ -151,13 +181,20 @@ export const DashboardScreen: React.FC = () => {
         </View>
 
         {/* Mascot */}
-        <View style={styles.mascotContainer}>{renderMascot()}</View>
+        <View style={styles.mascotContainer}>
+          {renderMascot()}
+          {charityName && (
+            <View style={styles.charityPill}>
+              <Text style={styles.charityPillText}>❤️ Supporting {charityName}</Text>
+            </View>
+          )}
+        </View>
 
         {/* Current Hours */}
         <Text style={styles.displayNumber}>
-          {loading ? '…' : currentHours.toFixed(1)}
+          {loading ? '…' : periodType === 'daily' ? currentHours.toFixed(1) : periodUsageHours.toFixed(1)}
         </Text>
-        <Text style={styles.hoursLabel}>hours today</Text>
+        <Text style={styles.hoursLabel}>hours {periodLabel}</Text>
 
         {/* Progress Bar */}
         <View style={styles.progressBarContainer}>
@@ -165,7 +202,7 @@ export const DashboardScreen: React.FC = () => {
         </View>
         <View style={styles.progressLabels}>
           <Text style={styles.progressLabel}>0</Text>
-          <Text style={styles.progressLabel}>{MAX_DAILY_HOURS}h goal</Text>
+          <Text style={styles.progressLabel}>{periodLimitHours % 1 === 0 ? periodLimitHours : periodLimitHours.toFixed(1)}h {periodType === 'daily' ? 'goal' : `/ ${periodType}`}</Text>
         </View>
 
         {/* Status Card */}
@@ -184,6 +221,26 @@ export const DashboardScreen: React.FC = () => {
             </View>
           </View>
         </Card>
+
+        {/* Streak Bonus */}
+        <View style={styles.bonusCard}>
+          <View style={styles.bonusLeft}>
+            <Text style={styles.bonusTitle}>🔥 Streak Bonus</Text>
+            <Text style={styles.bonusSubtitle}>
+              {streakToBonus === 7
+                ? 'Start a streak to earn your stake back!'
+                : `${streakToBonus} more day${streakToBonus === 1 ? '' : 's'} → earn $${stakeAmount} back`}
+            </Text>
+          </View>
+          <View style={styles.bonusDots}>
+            {Array.from({ length: 7 }).map((_, i) => (
+              <View
+                key={i}
+                style={[styles.bonusDot, i < (streak % 7) && styles.bonusDotFilled]}
+              />
+            ))}
+          </View>
+        </View>
 
         {/* Streak Section */}
         <View style={styles.streakSection}>
@@ -227,16 +284,30 @@ const styles = StyleSheet.create({
   mascotContainer: {
     alignItems: 'center',
     marginVertical: theme.spacing.sm,
+    gap: theme.spacing.xs,
+  },
+  charityPill: {
+    backgroundColor: theme.colors.primaryFaded,
+    borderRadius: theme.borderRadius.full,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: theme.colors.primaryLight,
+  },
+  charityPillText: {
+    fontSize: theme.typography.fontSize.small,
+    fontFamily: theme.typography.fontFamily.medium,
+    color: theme.colors.primary,
   },
   displayNumber: {
     fontSize: theme.typography.fontSize.display,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontFamily: theme.typography.fontFamily.extrabold,
     color: theme.colors.text.primary,
     textAlign: 'center',
   },
   hoursLabel: {
     fontSize: theme.typography.fontSize.h3,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontFamily: theme.typography.fontFamily.medium,
     color: theme.colors.text.secondary,
     textAlign: 'center',
     marginTop: theme.spacing.xs,
@@ -272,23 +343,61 @@ const styles = StyleSheet.create({
   },
   statusLabel: {
     fontSize: theme.typography.fontSize.small,
+    fontFamily: theme.typography.fontFamily.medium,
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.xs,
   },
   statusValue: {
     fontSize: theme.typography.fontSize.h2,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontFamily: theme.typography.fontFamily.extrabold,
     color: theme.colors.text.primary,
   },
   statusValueStake: {
     color: theme.colors.primary,
+  },
+  bonusCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.primaryFaded,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.primary,
+  },
+  bonusLeft: { flex: 1 },
+  bonusTitle: {
+    fontSize: theme.typography.fontSize.body,
+    fontFamily: theme.typography.fontFamily.semibold,
+    color: theme.colors.primary,
+    marginBottom: 2,
+  },
+  bonusSubtitle: {
+    fontSize: theme.typography.fontSize.small,
+    fontFamily: theme.typography.fontFamily.regular,
+    color: theme.colors.text.secondary,
+  },
+  bonusDots: {
+    flexDirection: 'row',
+    gap: 5,
+    paddingLeft: theme.spacing.sm,
+  },
+  bonusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: theme.colors.border,
+  },
+  bonusDotFilled: {
+    backgroundColor: theme.colors.primary,
   },
   streakSection: {
     marginBottom: theme.spacing.md,
   },
   sectionTitle: {
     fontSize: theme.typography.fontSize.h3,
-    fontWeight: theme.typography.fontWeight.semibold,
+    fontFamily: theme.typography.fontFamily.semibold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
   },
@@ -301,8 +410,8 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.h1,
   },
   streakText: {
-    fontSize: theme.typography.fontSize.h3,
-    fontWeight: theme.typography.fontWeight.semibold,
+    fontSize: theme.typography.fontSize.h2,
+    fontFamily: theme.typography.fontFamily.bold,
     color: theme.colors.text.primary,
   },
   weekSection: {

@@ -5,6 +5,7 @@ import { theme } from '../../theme';
 import { WelcomeStep } from './WelcomeStep';
 import { GoalStep } from './GoalStep';
 import { StakeStep } from './StakeStep';
+import { CommitmentStep } from './CommitmentStep';
 import { CharityStep } from './CharityStep';
 import { Button } from '../../components/ui/Button';
 import { useAuthStore } from '../../stores/authStore';
@@ -13,14 +14,16 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
 import { TrackingService } from '../../services/TrackingService';
 import { showAlert } from '../../utils/alert';
+import { hoursToMinutes } from '../../utils/goalPeriod';
 
 export const OnboardingScreen: React.FC = () => {
   const { user } = useAuth();
   const { completeOnboarding } = useAuthStore();
-  const { dailyGoalHours, stakeAmount, charityId } = useOnboardingStore();
+  const { dailyGoalHours, periodType, stakeAmount, charityId } = useOnboardingStore();
   const [currentStep, setCurrentStep] = useState(0);
 
-  const steps = [WelcomeStep, GoalStep, StakeStep, CharityStep];
+  // Welcome → Goal → Stake → Commitment → Charity
+  const steps = [WelcomeStep, GoalStep, StakeStep, CommitmentStep, CharityStep];
   const totalSteps = steps.length;
   const CurrentStepComponent = steps[currentStep];
 
@@ -30,14 +33,12 @@ export const OnboardingScreen: React.FC = () => {
     } else {
       if (user) {
         try {
-          await TrackingService.saveGoal(user.id, Math.round(dailyGoalHours * 60));
+          await TrackingService.saveGoal(user.id, hoursToMinutes(dailyGoalHours), periodType);
 
           const profileUpdate: Record<string, unknown> = {
             has_completed_onboarding: true,
           };
-          if (charityId) {
-            profileUpdate.default_charity_id = charityId;
-          }
+          if (charityId) profileUpdate.default_charity_id = charityId;
 
           const { error } = await supabase
             .from('profiles')
@@ -59,13 +60,10 @@ export const OnboardingScreen: React.FC = () => {
   };
 
   const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
+    if (currentStep > 0) setCurrentStep(currentStep - 1);
   };
 
-  // Disable Next on charity step if nothing selected yet
-  const nextDisabled = currentStep === 3 && !charityId;
+  const nextDisabled = currentStep === totalSteps - 1 && !charityId;
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -78,10 +76,7 @@ export const OnboardingScreen: React.FC = () => {
           {Array.from({ length: totalSteps }).map((_, index) => (
             <View
               key={index}
-              style={[
-                styles.paginationDot,
-                index === currentStep && styles.paginationDotActive,
-              ]}
+              style={[styles.paginationDot, index === currentStep && styles.paginationDotActive]}
             />
           ))}
         </View>
@@ -104,13 +99,8 @@ export const OnboardingScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    flex: 1,
-  },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  content: { flex: 1 },
   footer: {
     paddingHorizontal: theme.spacing.md,
     paddingBottom: theme.spacing.md,
@@ -135,7 +125,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: theme.spacing.sm,
   },
-  button: {
-    flex: 1,
-  },
+  button: { flex: 1 },
 });

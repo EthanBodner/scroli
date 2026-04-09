@@ -10,6 +10,7 @@ import { theme } from '../../theme';
 import { useAuth } from '../../contexts/AuthContext';
 import { TrackingService, DayResult } from '../../services/TrackingService';
 import { MAX_DAILY_HOURS } from '../../utils/constants';
+import { supabase } from '../../services/supabase';
 
 export const ImpactFlowScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -21,17 +22,20 @@ export const ImpactFlowScreen: React.FC = () => {
   const [actualHours, setActualHours] = useState(0);
   const [stakeAmount, setStakeAmount] = useState(5);
   const [dayResult, setDayResult] = useState<DayResult>('pending');
+  const [charityName, setCharityName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
 
     const load = async () => {
       try {
-        const [goal, balance, result] = await Promise.all([
+        const [goal, balance, result, profileRes] = await Promise.all([
           TrackingService.getActiveGoal(user.id),
           TrackingService.getWalletBalance(user.id),
           TrackingService.evaluateDayResult(user.id),
+          supabase.from('profiles').select('charities(name)').eq('id', user.id).single(),
         ]);
+        setCharityName((profileRes.data?.charities as any)?.name ?? null);
 
         const today = new Date().toISOString().split('T')[0];
         const records = await TrackingService.getRecentRecords(user.id, 1);
@@ -58,7 +62,7 @@ export const ImpactFlowScreen: React.FC = () => {
       case 0:
         return <RealityStep goalHours={goalHours} actualHours={actualHours} />;
       case 1:
-        return <ImpactStep donationAmount={stakeAmount} impactMessage={impactMessage} />;
+        return <ImpactStep donationAmount={stakeAmount} impactMessage={impactMessage} charityName={charityName} />;
       case 2:
         return <ResetStep />;
       default:

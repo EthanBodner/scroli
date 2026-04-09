@@ -1,23 +1,32 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { Mascot } from '../../components/mascots/Mascot';
 
 export const ResetStep: React.FC = () => {
   return (
     <View style={styles.container}>
-      <Mascot size={200} usagePercent={0.1} />
+      <Mascot size={180} usagePercent={0.1} />
 
-      <Text style={styles.title}>Tomorrow is a new day</Text>
-
+      <Text style={styles.title}>Tomorrow is a{'\n'}new day</Text>
       <Text style={styles.message}>
-        Every day is a fresh start. Your counter resets at midnight, and you get another chance to stay under your goal.
+        Every day resets at midnight. Come back stronger.
       </Text>
 
-      <View style={styles.encouragementCard}>
-        <Text style={styles.encouragementText}>
-          💪 You've got this! Learn from today and come back stronger tomorrow.
-        </Text>
+      <View style={styles.tipsCard}>
+        {[
+          'Put your phone in another room at night',
+          'Turn on Screen Time limits for your top apps',
+          'Replace scroll time with a 5-min walk',
+        ].map((tip, i) => (
+          <View key={i} style={[styles.tipRow, i > 0 && styles.tipRowBorder]}>
+            <View style={styles.tipIcon}>
+              <Ionicons name="checkmark" size={14} color={theme.colors.primary} />
+            </View>
+            <Text style={styles.tipText}>{tip}</Text>
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -28,35 +37,54 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
     backgroundColor: theme.colors.cream,
   },
   title: {
     fontSize: theme.typography.fontSize.h1,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontFamily: theme.typography.fontFamily.bold,
     color: theme.colors.text.primary,
     marginTop: theme.spacing.lg,
     textAlign: 'center',
+    lineHeight: theme.typography.fontSize.h1 * theme.typography.lineHeight.tight,
   },
   message: {
     fontSize: theme.typography.fontSize.body,
+    fontFamily: theme.typography.fontFamily.regular,
     color: theme.colors.text.secondary,
     textAlign: 'center',
-    marginTop: theme.spacing.md,
-    lineHeight: theme.typography.fontSize.body * theme.typography.lineHeight.relaxed,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.xl,
   },
-  encouragementCard: {
+  tipsCard: {
     backgroundColor: theme.colors.background,
-    padding: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
-    marginTop: theme.spacing.xl,
+    width: '100%',
     ...theme.shadows.sm,
   },
-  encouragementText: {
-    fontSize: theme.typography.fontSize.body,
-    fontWeight: theme.typography.fontWeight.medium,
+  tipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    padding: theme.spacing.sm,
+  },
+  tipRowBorder: {
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+  },
+  tipIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: theme.colors.primaryFaded,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tipText: {
+    flex: 1,
+    fontSize: theme.typography.fontSize.small,
+    fontFamily: theme.typography.fontFamily.medium,
     color: theme.colors.text.primary,
-    textAlign: 'center',
-    lineHeight: theme.typography.fontSize.body * theme.typography.lineHeight.relaxed,
+    lineHeight: theme.typography.fontSize.small * theme.typography.lineHeight.relaxed,
   },
 });

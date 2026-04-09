@@ -8,17 +8,18 @@ export const TrackingService = {
    * Save or update the user's active goal.
    * Called at end of onboarding.
    */
-  async saveGoal(userId: string, dailyLimitMinutes: number): Promise<void> {
-    // Deactivate existing goals first
+  async saveGoal(userId: string, limitMinutes: number, periodType: 'daily' | 'weekly' | 'monthly' = 'daily'): Promise<void> {
     await supabase
       .from('goals')
       .update({ is_active: false })
       .eq('user_id', userId);
 
+    const hours = Math.round(limitMinutes / 60);
     const { error } = await supabase.from('goals').insert({
       user_id: userId,
-      title: `${Math.round(dailyLimitMinutes / 60)}h daily limit`,
-      daily_limit_minutes: dailyLimitMinutes,
+      title: `${hours}h ${periodType} limit`,
+      daily_limit_minutes: limitMinutes,
+      period_type: periodType,
       is_active: true,
     });
 
@@ -29,16 +30,16 @@ export const TrackingService = {
    * Get the user's current active goal in minutes.
    * Returns null if none found.
    */
-  async getActiveGoal(userId: string): Promise<{ id: string; daily_limit_minutes: number } | null> {
+  async getActiveGoal(userId: string): Promise<{ id: string; daily_limit_minutes: number; period_type: string } | null> {
     const { data, error } = await supabase
       .from('goals')
-      .select('id, daily_limit_minutes')
+      .select('id, daily_limit_minutes, period_type')
       .eq('user_id', userId)
       .eq('is_active', true)
       .single();
 
     if (error || !data) return null;
-    return data;
+    return { ...data, period_type: data.period_type ?? 'daily' };
   },
 
   /**
