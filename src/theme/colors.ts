@@ -9,6 +9,13 @@ export const colors = {
   teal: '#72C098',
   tealFaded: '#F2F9F6',
 
+  // Vibrant / Cartoonish Colors
+  yellow: '#FFD700',
+  purple: '#A855F7',
+  blue: '#3B82F6',
+  orange: '#FB923C',
+  pink: '#F472B6',
+
   // Background colors
   background: '#FFFFFF',
   cream: '#F5F6FA',      // light blue-grey from logo card background
@@ -27,7 +34,8 @@ export const colors = {
   },
 
   // UI colors
-  border: '#E5E7EB',
+  border: '#1F2937', // Darker border for cartoonish look
+  borderLight: '#E5E7EB',
   shadow: '#000000',
 
   // Card colors

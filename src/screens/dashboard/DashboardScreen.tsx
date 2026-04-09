@@ -198,7 +198,7 @@ export const DashboardScreen: React.FC = () => {
                   progress={usagePercent}
                   size={120}
                   strokeWidth={14}
-                  color={usagePercent > 0.9 ? theme.colors.error : theme.colors.teal}
+                  color={usagePercent > 0.9 ? theme.colors.error : theme.colors.success}
                   label={loading ? '…' : (periodType === 'daily' ? `${currentHours.toFixed(1)}` : `${periodUsageHours.toFixed(1)}`)}
                   sublabel="hours"
                 />

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '../../components/ui/Card';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,6 +9,10 @@ import { ConsistencyCalendar } from '../../components/ConsistencyCalendar';
 import { theme } from '../../theme';
 import { useAuth } from '../../contexts/AuthContext';
 import { TrackingService } from '../../services/TrackingService';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 type Period = 'week' | 'month' | 'all';
 
@@ -42,6 +46,11 @@ export const StatsScreen: React.FC = () => {
   const [moneySaved, setMoneySaved] = useState(0);
   const [moneyDonated, setMoneyDonated] = useState(0);
   const [goalHours, setGoalHours] = useState(3);
+
+  const togglePeriod = (newPeriod: Period) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
+    setPeriod(newPeriod);
+  };
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
@@ -91,7 +100,7 @@ export const StatsScreen: React.FC = () => {
               <Pressable
                 key={key}
                 style={[styles.periodTab, period === key && styles.periodTabActive]}
-                onPress={() => setPeriod(key)}
+                onPress={() => togglePeriod(key)}
               >
                 <Text style={[styles.periodLabel, period === key && styles.periodLabelActive]}>
                   {label}
@@ -103,33 +112,33 @@ export const StatsScreen: React.FC = () => {
 
         {/* ── Summary Sticker Chips ── */}
         <View style={styles.summaryGrid}>
-          <Card style={[styles.summaryChip, { backgroundColor: theme.colors.tealFaded }]}>
-            <View style={[styles.chipIconBox, { backgroundColor: 'rgba(114, 192, 152, 0.1)' }]}>
-              <Ionicons name="cash" size={18} color={theme.colors.teal} />
+          <Card variant="sticker" style={[styles.summaryChip, { backgroundColor: theme.colors.teal, transform: [{ rotate: '-1deg' }] }]}>
+            <View style={styles.chipIconBox}>
+              <Ionicons name="cash" size={18} color="#FFFFFF" />
             </View>
-            <Text style={[styles.chipValue, { color: theme.colors.teal }]}>${moneySaved}</Text>
+            <Text style={styles.chipValue}>${moneySaved}</Text>
             <Text style={styles.chipLabel}>Earned</Text>
           </Card>
           
-          <Card style={[styles.summaryChip, { backgroundColor: theme.colors.primaryFaded }]}>
-            <View style={[styles.chipIconBox, { backgroundColor: 'rgba(232, 112, 106, 0.1)' }]}>
-              <Ionicons name="heart" size={18} color={theme.colors.primary} />
+          <Card variant="sticker" style={[styles.summaryChip, { backgroundColor: theme.colors.primary, transform: [{ rotate: '1.5deg' }] }]}>
+            <View style={styles.chipIconBox}>
+              <Ionicons name="heart" size={18} color="#FFFFFF" />
             </View>
-            <Text style={[styles.chipValue, { color: theme.colors.primary }]}>${moneyDonated}</Text>
+            <Text style={styles.chipValue}>${moneyDonated}</Text>
             <Text style={styles.chipLabel}>Donated</Text>
           </Card>
 
-          <Card style={[styles.summaryChip, { backgroundColor: '#F5F3FF' }]}>
-            <View style={[styles.chipIconBox, { backgroundColor: 'rgba(124, 58, 237, 0.1)' }]}>
-              <Ionicons name="calendar" size={18} color="#7C3AED" />
+          <Card variant="sticker" style={[styles.summaryChip, { backgroundColor: theme.colors.purple, transform: [{ rotate: '-1.2deg' }] }]}>
+            <View style={styles.chipIconBox}>
+              <Ionicons name="calendar" size={18} color="#FFFFFF" />
             </View>
-            <Text style={[styles.chipValue, { color: '#7C3AED' }]}>{total}</Text>
+            <Text style={styles.chipValue}>{total}</Text>
             <Text style={styles.chipLabel}>Days</Text>
           </Card>
         </View>
 
         {/* ── Win Rate Hero ── */}
-        <Card style={styles.winHeroCard}>
+        <Card variant="sticker" style={styles.winHeroCard}>
           <View style={styles.winHeroHeader}>
             <Text style={styles.winHeroTitle}>Win Rate</Text>
             <View style={styles.winHeroBadge}>
@@ -139,14 +148,16 @@ export const StatsScreen: React.FC = () => {
           
           <View style={styles.winHeroContent}>
             <View style={styles.winHeroLeft}>
-              <CircularProgress
-                progress={winRate}
-                size={120}
-                strokeWidth={14}
-                color={winColor}
-                label={`${Math.round(winRate * 100)}%`}
-                sublabel=""
-              />
+              <View style={styles.circularWrapper}>
+                <CircularProgress
+                  progress={winRate}
+                  size={120}
+                  strokeWidth={16}
+                  color={winColor}
+                  label={`${Math.round(winRate * 100)}%`}
+                  sublabel=""
+                />
+              </View>
             </View>
             <View style={styles.winHeroRight}>
               <View style={styles.winStatRow}>
@@ -169,9 +180,9 @@ export const StatsScreen: React.FC = () => {
         </Card>
 
         {/* ── Bar Chart ── */}
-        <Card style={styles.card}>
+        <Card variant="sticker" style={styles.card}>
           <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Last 7 Days</Text>
+            <Text style={styles.cardTitle}>Activity</Text>
             <View style={styles.legendRow}>
               <View style={[styles.legendDot, { backgroundColor: theme.colors.teal }]} />
               <Text style={styles.legendLabel}>Under</Text>
@@ -193,7 +204,7 @@ export const StatsScreen: React.FC = () => {
                 const barColor = over ? theme.colors.error : theme.colors.teal;
                 return (
                   <View key={i} style={styles.chartBar}>
-                    <Text style={styles.barValue}>{hours.toFixed(1)}</Text>
+                    <Text style={styles.barValue}>{hours.toFixed(1)}h</Text>
                     <View style={styles.barTrack}>
                       <View style={[styles.bar, { height: `${heightPercent}%`, backgroundColor: barColor }]} />
                     </View>
@@ -210,7 +221,7 @@ export const StatsScreen: React.FC = () => {
         </Card>
 
         {/* ── Consistency Calendar ── */}
-        <Card style={styles.card}>
+        <Card variant="sticker" style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Consistency</Text>
             <Text style={styles.cardSub}>Last 5 weeks</Text>
@@ -220,7 +231,7 @@ export const StatsScreen: React.FC = () => {
 
         {/* ── Impact Sticker ── */}
         {moneyDonated > 0 && (
-          <Card style={styles.impactSticker}>
+          <Card variant="sticker" style={styles.impactSticker}>
             <View style={styles.impactIconBox}>
               <Ionicons name="sparkles" size={24} color="#FFFFFF" />
             </View>
@@ -292,32 +303,37 @@ const styles = StyleSheet.create({
   // ── Summary Sticker Chips
   summaryGrid: {
     flexDirection: 'row',
-    gap: 10,
-    marginBottom: 16,
+    gap: 8,
+    marginBottom: 20,
+    marginTop: 10,
   },
   summaryChip: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: 14,
+    paddingHorizontal: 4,
     borderRadius: 22,
-    gap: 4,
+    gap: 2,
   },
   chipIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 2,
+    marginBottom: 4,
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   chipValue: {
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: theme.typography.fontFamily.extrabold,
+    color: '#FFFFFF',
   },
   chipLabel: {
     fontSize: 10,
-    fontFamily: theme.typography.fontFamily.medium,
-    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fontFamily.bold,
+    color: 'rgba(255,255,255,0.8)',
+    textTransform: 'uppercase',
   },
 
   // ── Win Hero Card
@@ -354,34 +370,46 @@ const styles = StyleSheet.create({
   },
   winHeroLeft: {
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  circularWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 70,
+    padding: 10,
+    ...theme.shadows.sm,
   },
   winHeroRight: {
-    gap: 16,
+    gap: 12,
+    flex: 1,
+    paddingLeft: 10,
   },
   winStatRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
   winStatDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderColor: theme.colors.border,
   },
   winStatValue: {
-    fontSize: 20,
+    fontSize: 22,
     fontFamily: theme.typography.fontFamily.extrabold,
     color: theme.colors.text.primary,
   },
   winStatLabel: {
     fontSize: 11,
-    fontFamily: theme.typography.fontFamily.medium,
+    fontFamily: theme.typography.fontFamily.bold,
     color: theme.colors.text.secondary,
+    textTransform: 'uppercase',
   },
   winStatDivider: {
-    height: 1,
-    backgroundColor: theme.colors.border,
+    height: 2,
+    backgroundColor: theme.colors.cream,
     width: '100%',
+    borderRadius: 1,
   },
 
   // ── Card Generic
@@ -500,12 +528,13 @@ const styles = StyleSheet.create({
 
   // ── Impact Sticker
   impactSticker: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.blue,
     padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-    marginBottom: 20,
+    marginBottom: 24,
+    transform: [{ rotate: '0.5deg' }],
   },
   impactIconBox: {
     width: 48,

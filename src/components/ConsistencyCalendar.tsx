@@ -9,13 +9,13 @@ type Props = {
   days?: number; // how many days to show, default 30
 };
 
-const DOT_SIZE = 11;
-const DOT_GAP = 4;
+const DOT_SIZE = 12;
+const DOT_GAP = 5;
 const COLS = 7;
 
 const STATUS_COLOR: { [key: string]: string } = {
-  success: '#22C55E',
-  failure: '#EF4444',
+  success: '#10B981', // theme.colors.success
+  failure: '#EF4444', // theme.colors.error
 };
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
