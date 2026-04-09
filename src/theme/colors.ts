@@ -5,6 +5,10 @@ export const colors = {
   primaryLight: '#F0948F',
   primaryFaded: '#FDECEA',
 
+  // Accent green — "time saved / earned back" (Soft Emerald)
+  teal: '#72C098',
+  tealFaded: '#F2F9F6',
+
   // Background colors
   background: '#FFFFFF',
   cream: '#F5F6FA',      // light blue-grey from logo card background

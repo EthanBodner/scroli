@@ -13,7 +13,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ progress, height = 8 }
   const getProgressColor = () => {
     if (progress > 0.9) return theme.colors.error;
     if (progress > 0.7) return theme.colors.warning;
-    return theme.colors.success;
+    return theme.colors.teal;
   };
 
   const handleLayout = (event: LayoutChangeEvent) => {

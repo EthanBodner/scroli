@@ -14,27 +14,32 @@ export const WelcomeStep: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={styles.hero}>
-        <Mascot size={140} usagePercent={0.1} />
-        <Text style={styles.heroTitle}>scroli</Text>
+        <Mascot size={150} usagePercent={0.1} />
+        <Text style={styles.heroTitle}>Scroli</Text>
         <Text style={styles.heroTagline}>Put money on the line.{'\n'}Get your time back.</Text>
       </View>
 
-      <View style={styles.card}>
-        {BENEFITS.map((b, i) => (
-          <View key={i} style={[styles.benefitRow, i < BENEFITS.length - 1 && styles.benefitRowBorder]}>
-            <View style={styles.iconWrap}>
-              <Ionicons name={b.icon} size={22} color={theme.colors.primary} />
+      <View style={styles.content}>
+        <Text style={styles.sectionTitle}>How it works</Text>
+        <View style={styles.benefitsContainer}>
+          {BENEFITS.map((b, i) => (
+            <View key={i} style={styles.benefitCard}>
+              <View style={styles.iconWrap}>
+                <Ionicons name={b.icon} size={20} color={theme.colors.primary} />
+              </View>
+              <View style={styles.benefitText}>
+                <Text style={styles.benefitTitle}>{b.title}</Text>
+                <Text style={styles.benefitBody}>{b.body}</Text>
+              </View>
             </View>
-            <View style={styles.benefitText}>
-              <Text style={styles.benefitTitle}>{b.title}</Text>
-              <Text style={styles.benefitBody}>{b.body}</Text>
-            </View>
-          </View>
-        ))}
+          ))}
+        </View>
 
-        <View style={styles.disclaimer}>
-          <Ionicons name="shield-checkmark-outline" size={14} color={theme.colors.success} />
-          <Text style={styles.disclaimerText}>No money charged until you miss your goal</Text>
+        <View style={styles.footerInfo}>
+          <View style={styles.disclaimerBadge}>
+            <Ionicons name="shield-checkmark" size={12} color={theme.colors.teal} />
+            <Text style={styles.disclaimerText}>No charges until you miss a goal</Text>
+          </View>
         </View>
       </View>
     </View>
@@ -48,78 +53,92 @@ const styles = StyleSheet.create({
   },
   hero: {
     alignItems: 'center',
-    paddingTop: 32,
-    paddingBottom: 36,
+    paddingTop: 48,
+    paddingBottom: 40,
     gap: 8,
   },
   heroTitle: {
-    fontSize: 36,
+    fontSize: 40,
     fontFamily: theme.typography.fontFamily.extrabold,
     color: '#FFFFFF',
-    letterSpacing: -0.5,
+    letterSpacing: -1,
   },
   heroTagline: {
-    fontSize: theme.typography.fontSize.body,
-    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 16,
+    fontFamily: theme.typography.fontFamily.medium,
     color: 'rgba(255,255,255,0.85)',
     textAlign: 'center',
-    lineHeight: theme.typography.fontSize.body * theme.typography.lineHeight.relaxed,
+    lineHeight: 22,
   },
-  card: {
+  content: {
     flex: 1,
-    backgroundColor: theme.colors.background,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    padding: theme.spacing.lg,
-    paddingTop: 28,
+    backgroundColor: theme.colors.cream,
+    borderTopLeftRadius: 36,
+    borderTopRightRadius: 36,
+    padding: 24,
   },
-  benefitRow: {
+  sectionTitle: {
+    fontSize: 12,
+    fontFamily: theme.typography.fontFamily.bold,
+    color: theme.colors.text.light,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  benefitsContainer: {
+    gap: 12,
+  },
+  benefitCard: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: theme.spacing.sm,
-    paddingVertical: theme.spacing.sm,
-  },
-  benefitRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 24,
+    gap: 16,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   iconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 16,
     backgroundColor: theme.colors.primaryFaded,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 2,
   },
   benefitText: {
     flex: 1,
+    gap: 2,
   },
   benefitTitle: {
-    fontSize: theme.typography.fontSize.body,
-    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 15,
+    fontFamily: theme.typography.fontFamily.bold,
     color: theme.colors.text.primary,
-    marginBottom: 2,
   },
   benefitBody: {
-    fontSize: theme.typography.fontSize.small,
-    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 12,
+    fontFamily: theme.typography.fontFamily.medium,
     color: theme.colors.text.secondary,
-    lineHeight: theme.typography.fontSize.small * theme.typography.lineHeight.relaxed,
+    lineHeight: 16,
   },
-  disclaimer: {
+  footerInfo: {
+    marginTop: 'auto',
+    alignItems: 'center',
+    paddingTop: 16,
+  },
+  disclaimerBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: theme.colors.tealFaded,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
     gap: 6,
-    marginTop: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
   },
   disclaimerText: {
-    fontSize: theme.typography.fontSize.small,
-    fontFamily: theme.typography.fontFamily.medium,
-    color: theme.colors.success,
+    fontSize: 11,
+    fontFamily: theme.typography.fontFamily.bold,
+    color: theme.colors.teal,
   },
 });

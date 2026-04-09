@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '../../components/ui/Card';
+import { Ionicons } from '@expo/vector-icons';
 import { LoadingView } from '../../components/ui/LoadingView';
 import { CircularProgress } from '../../components/CircularProgress';
 import { ConsistencyCalendar } from '../../components/ConsistencyCalendar';
@@ -75,12 +76,16 @@ export const StatsScreen: React.FC = () => {
   const chartRecords = allRecords.slice(-7);
   const maxHours = Math.max(goalHours * 1.5, ...chartRecords.map(r => r.duration_minutes / 60), 1);
 
+  const winColor = winRate >= 0.7 ? theme.colors.success : winRate >= 0.4 ? theme.colors.warning : theme.colors.error;
+  const winBg = winRate >= 0.7 ? '#F0FDF4' : winRate >= 0.4 ? '#FFFBEB' : '#FFF1F2';
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Header */}
+
+        {/* ── Header ── */}
         <View style={styles.headerRow}>
-          <Text style={styles.header}>Stats</Text>
+          <Text style={styles.headerTitle}>Stats</Text>
           <View style={styles.periodToggle}>
             {PERIOD_LABELS.map(({ key, label }) => (
               <Pressable
@@ -96,70 +101,101 @@ export const StatsScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Win Rate Hero */}
-        <Card style={styles.winCard}>
-          <Text style={styles.cardTitle}>Win Rate</Text>
-          <View style={styles.winRateContent}>
-            <CircularProgress
-              progress={winRate}
-              size={156}
-              strokeWidth={14}
-              color={winRate >= 0.7 ? theme.colors.success : winRate >= 0.4 ? theme.colors.warning : theme.colors.error}
-              label={`${Math.round(winRate * 100)}%`}
-              sublabel={`${total} days`}
-            />
-            <View style={styles.winStats}>
-              <View style={[styles.pill, styles.pillWin]}>
-                <Text style={[styles.pillCount, { color: theme.colors.success }]}>{wins}</Text>
-                <Text style={styles.pillLabel}>wins</Text>
+        {/* ── Summary Sticker Chips ── */}
+        <View style={styles.summaryGrid}>
+          <Card style={[styles.summaryChip, { backgroundColor: theme.colors.tealFaded }]}>
+            <View style={[styles.chipIconBox, { backgroundColor: 'rgba(114, 192, 152, 0.1)' }]}>
+              <Ionicons name="cash" size={18} color={theme.colors.teal} />
+            </View>
+            <Text style={[styles.chipValue, { color: theme.colors.teal }]}>${moneySaved}</Text>
+            <Text style={styles.chipLabel}>Earned</Text>
+          </Card>
+          
+          <Card style={[styles.summaryChip, { backgroundColor: theme.colors.primaryFaded }]}>
+            <View style={[styles.chipIconBox, { backgroundColor: 'rgba(232, 112, 106, 0.1)' }]}>
+              <Ionicons name="heart" size={18} color={theme.colors.primary} />
+            </View>
+            <Text style={[styles.chipValue, { color: theme.colors.primary }]}>${moneyDonated}</Text>
+            <Text style={styles.chipLabel}>Donated</Text>
+          </Card>
+
+          <Card style={[styles.summaryChip, { backgroundColor: '#F5F3FF' }]}>
+            <View style={[styles.chipIconBox, { backgroundColor: 'rgba(124, 58, 237, 0.1)' }]}>
+              <Ionicons name="calendar" size={18} color="#7C3AED" />
+            </View>
+            <Text style={[styles.chipValue, { color: '#7C3AED' }]}>{total}</Text>
+            <Text style={styles.chipLabel}>Days</Text>
+          </Card>
+        </View>
+
+        {/* ── Win Rate Hero ── */}
+        <Card style={styles.winHeroCard}>
+          <View style={styles.winHeroHeader}>
+            <Text style={styles.winHeroTitle}>Win Rate</Text>
+            <View style={styles.winHeroBadge}>
+              <Text style={styles.winHeroBadgeText}>{period === 'week' ? 'Past 7d' : period === 'month' ? 'This Month' : 'All Time'}</Text>
+            </View>
+          </View>
+          
+          <View style={styles.winHeroContent}>
+            <View style={styles.winHeroLeft}>
+              <CircularProgress
+                progress={winRate}
+                size={120}
+                strokeWidth={14}
+                color={winColor}
+                label={`${Math.round(winRate * 100)}%`}
+                sublabel=""
+              />
+            </View>
+            <View style={styles.winHeroRight}>
+              <View style={styles.winStatRow}>
+                <View style={[styles.winStatDot, { backgroundColor: theme.colors.teal }]} />
+                <View>
+                  <Text style={styles.winStatValue}>{wins}</Text>
+                  <Text style={styles.winStatLabel}>Wins</Text>
+                </View>
               </View>
-              <View style={[styles.pill, styles.pillMiss]}>
-                <Text style={[styles.pillCount, { color: theme.colors.error }]}>{misses}</Text>
-                <Text style={styles.pillLabel}>misses</Text>
+              <View style={styles.winStatDivider} />
+              <View style={styles.winStatRow}>
+                <View style={[styles.winStatDot, { backgroundColor: theme.colors.error }]} />
+                <View>
+                  <Text style={styles.winStatValue}>{misses}</Text>
+                  <Text style={styles.winStatLabel}>Misses</Text>
+                </View>
               </View>
-              {total === 0 && (
-                <Text style={styles.emptyNote}>No data yet</Text>
-              )}
             </View>
           </View>
         </Card>
 
-        {/* Money Row */}
-        <View style={styles.moneyRow}>
-          <Card style={styles.moneyCard}>
-            <Text style={styles.moneyEmoji}>💰</Text>
-            <Text style={[styles.moneyValue, { color: theme.colors.success }]}>${moneySaved}</Text>
-            <Text style={styles.moneyLabel}>earned back</Text>
-          </Card>
-          <Card style={styles.moneyCard}>
-            <Text style={styles.moneyEmoji}>❤️</Text>
-            <Text style={[styles.moneyValue, { color: theme.colors.primary }]}>${moneyDonated}</Text>
-            <Text style={styles.moneyLabel}>donated</Text>
-          </Card>
-        </View>
-
-        {/* Consistency Calendar */}
+        {/* ── Bar Chart ── */}
         <Card style={styles.card}>
-          <Text style={styles.cardTitle}>Consistency</Text>
-          <ConsistencyCalendar records={allRecords} days={35} />
-        </Card>
-
-        {/* Usage Chart */}
-        <Card style={styles.card}>
-          <Text style={styles.cardTitle}>Last 7 Days</Text>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>Last 7 Days</Text>
+            <View style={styles.legendRow}>
+              <View style={[styles.legendDot, { backgroundColor: theme.colors.teal }]} />
+              <Text style={styles.legendLabel}>Under</Text>
+              <View style={[styles.legendDot, { backgroundColor: theme.colors.error }]} />
+              <Text style={styles.legendLabel}>Over goal</Text>
+            </View>
+          </View>
           {chartRecords.length === 0 ? (
-            <Text style={styles.emptyText}>No data yet — keep tracking!</Text>
+            <View style={styles.emptyChartBox}>
+              <Ionicons name="bar-chart-outline" size={34} color={theme.colors.text.light} />
+              <Text style={styles.emptyText}>No data yet — keep tracking!</Text>
+            </View>
           ) : (
             <View style={styles.chart}>
               {chartRecords.map((r, i) => {
                 const hours = r.duration_minutes / 60;
                 const heightPercent = (hours / maxHours) * 100;
                 const over = hours > goalHours;
+                const barColor = over ? theme.colors.error : theme.colors.teal;
                 return (
                   <View key={i} style={styles.chartBar}>
                     <Text style={styles.barValue}>{hours.toFixed(1)}</Text>
-                    <View style={styles.barContainer}>
-                      <View style={[styles.bar, { height: `${heightPercent}%`, backgroundColor: over ? theme.colors.error : theme.colors.success }]} />
+                    <View style={styles.barTrack}>
+                      <View style={[styles.bar, { height: `${heightPercent}%`, backgroundColor: barColor }]} />
                     </View>
                     <Text style={styles.barLabel}>{DAYS[new Date(r.date).getDay()]}</Text>
                   </View>
@@ -173,163 +209,329 @@ export const StatsScreen: React.FC = () => {
           </View>
         </Card>
 
-        {/* Impact */}
+        {/* ── Consistency Calendar ── */}
+        <Card style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>Consistency</Text>
+            <Text style={styles.cardSub}>Last 5 weeks</Text>
+          </View>
+          <ConsistencyCalendar records={allRecords} days={35} />
+        </Card>
+
+        {/* ── Impact Sticker ── */}
         {moneyDonated > 0 && (
-          <Card style={styles.impactCard}>
-            <Text style={styles.impactTitle}>Real World Impact 🌍</Text>
-            <Text style={styles.impactMessage}>
-              Your ${moneyDonated} protected {Math.max(1, moneyDonated * 2)} children from malaria for a month
-            </Text>
+          <Card style={styles.impactSticker}>
+            <View style={styles.impactIconBox}>
+              <Ionicons name="sparkles" size={24} color="#FFFFFF" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.impactSubtitle}>Real World Impact</Text>
+              <Text style={styles.impactValue}>${moneyDonated} Donated</Text>
+              <Text style={styles.impactText}>
+                Your discipline protected {Math.max(1, moneyDonated * 2)} children from malaria this year.
+              </Text>
+            </View>
           </Card>
         )}
+
       </ScrollView>
     </SafeAreaView>
   );
+
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  scrollContent: { paddingHorizontal: theme.spacing.md, paddingBottom: theme.spacing.xl },
+  container: { 
+    flex: 1, 
+    backgroundColor: theme.colors.cream, // Softer background
+  },
+  scrollContent: { 
+    paddingHorizontal: 16, 
+    paddingBottom: 40, 
+    paddingTop: 8 
+  },
 
+  // ── Header
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: theme.spacing.md,
-    marginTop: theme.spacing.xs,
+    marginBottom: 20,
+    marginTop: 8,
   },
-  header: {
-    fontSize: theme.typography.fontSize.h1,
+  headerTitle: {
+    fontSize: 28,
     fontFamily: theme.typography.fontFamily.bold,
     color: theme.colors.text.primary,
   },
   periodToggle: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.cream,
-    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
     padding: 3,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   periodTab: {
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 17,
+    borderRadius: 19,
   },
-  periodTabActive: {
+  periodTabActive: { 
     backgroundColor: theme.colors.primary,
   },
   periodLabel: {
-    fontSize: theme.typography.fontSize.small,
+    fontSize: 11,
     fontFamily: theme.typography.fontFamily.semibold,
     color: theme.colors.text.secondary,
   },
-  periodLabelActive: {
-    color: '#FFFFFF',
+  periodLabelActive: { 
+    color: '#FFFFFF' 
   },
 
-  card: { marginBottom: theme.spacing.md },
-  cardTitle: {
-    fontSize: theme.typography.fontSize.h3,
-    fontFamily: theme.typography.fontFamily.semibold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
+  // ── Summary Sticker Chips
+  summaryGrid: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
+  },
+  summaryChip: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderRadius: 22,
+    gap: 4,
+  },
+  chipIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  chipValue: {
+    fontSize: 18,
+    fontFamily: theme.typography.fontFamily.extrabold,
+  },
+  chipLabel: {
+    fontSize: 10,
+    fontFamily: theme.typography.fontFamily.medium,
+    color: theme.colors.text.secondary,
   },
 
-  winCard: { marginBottom: theme.spacing.md },
-  winRateContent: {
+  // ── Win Hero Card
+  winHeroCard: {
+    padding: 20,
+    marginBottom: 16,
+  },
+  winHeroHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.lg,
+    justifyContent: 'space-between',
+    marginBottom: 20,
   },
-  winStats: {
-    flex: 1,
-    gap: theme.spacing.sm,
+  winHeroTitle: {
+    fontSize: 16,
+    fontFamily: theme.typography.fontFamily.bold,
+    color: theme.colors.text.primary,
   },
-  pill: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 14,
+  winHeroBadge: {
+    backgroundColor: theme.colors.cream,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  winHeroBadgeText: {
+    fontSize: 10,
+    fontFamily: theme.typography.fontFamily.bold,
+    color: theme.colors.text.secondary,
+  },
+  winHeroContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+  },
+  winHeroLeft: {
     alignItems: 'center',
   },
-  pillWin: { backgroundColor: '#DCFCE7' },
-  pillMiss: { backgroundColor: '#FEE2E2' },
-  pillCount: {
-    fontSize: theme.typography.fontSize.h2,
-    fontFamily: theme.typography.fontFamily.bold,
+  winHeroRight: {
+    gap: 16,
   },
-  pillLabel: {
+  winStatRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  winStatDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  winStatValue: {
+    fontSize: 20,
+    fontFamily: theme.typography.fontFamily.extrabold,
+    color: theme.colors.text.primary,
+  },
+  winStatLabel: {
     fontSize: 11,
     fontFamily: theme.typography.fontFamily.medium,
     color: theme.colors.text.secondary,
-    marginTop: 1,
   },
-  emptyNote: {
-    fontSize: theme.typography.fontSize.small,
-    fontFamily: theme.typography.fontFamily.regular,
-    color: theme.colors.text.light,
-    textAlign: 'center',
+  winStatDivider: {
+    height: 1,
+    backgroundColor: theme.colors.border,
+    width: '100%',
   },
 
-  moneyRow: { flexDirection: 'row', gap: theme.spacing.sm, marginBottom: theme.spacing.md },
-  moneyCard: { flex: 1, alignItems: 'center', gap: 4 },
-  moneyEmoji: { fontSize: 26 },
-  moneyValue: {
-    fontSize: theme.typography.fontSize.h2,
-    fontFamily: theme.typography.fontFamily.extrabold,
+  // ── Card Generic
+  card: { 
+    marginBottom: 14,
+    padding: 16,
   },
-  moneyLabel: {
-    fontSize: theme.typography.fontSize.small,
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontFamily: theme.typography.fontFamily.bold,
+    color: theme.colors.text.primary,
+  },
+  cardSub: {
+    fontSize: 11,
     fontFamily: theme.typography.fontFamily.medium,
-    color: theme.colors.text.secondary,
+    color: theme.colors.text.light,
+    backgroundColor: theme.colors.cream,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
   },
 
+  // ── Chart
   chart: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    height: 120,
-    marginBottom: theme.spacing.sm,
+    height: 140,
+    marginBottom: 16,
+    marginTop: 10,
   },
-  chartBar: { flex: 1, alignItems: 'center', height: '100%', justifyContent: 'flex-end' },
-  barContainer: { flex: 1, width: '100%', alignItems: 'center', justifyContent: 'flex-end' },
-  bar: { width: '65%', borderTopLeftRadius: 6, borderTopRightRadius: 6 },
-  barValue: {
-    fontSize: 9,
-    fontFamily: theme.typography.fontFamily.medium,
-    color: theme.colors.text.secondary,
-    marginBottom: 2,
+  chartBar: {
+    flex: 1,
+    alignItems: 'center',
+    height: '100%',
+    justifyContent: 'flex-end',
+  },
+  barTrack: {
+    flex: 1,
+    width: '60%',
+    backgroundColor: theme.colors.cream,
+    borderRadius: 10,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
+  },
+  bar: {
+    width: '100%',
+    borderRadius: 10,
   },
   barLabel: {
-    fontSize: theme.typography.fontSize.tiny,
-    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: 10,
+    fontFamily: theme.typography.fontFamily.semibold,
     color: theme.colors.text.secondary,
-    marginTop: 4,
+    marginTop: 8,
   },
-  goalLine: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.xs },
-  goalLineDash: { flex: 1, height: 1, borderStyle: 'dashed', borderWidth: 1, borderColor: theme.colors.border },
-  goalLineLabel: {
-    fontSize: theme.typography.fontSize.small,
-    fontFamily: theme.typography.fontFamily.medium,
-    color: theme.colors.text.secondary,
+  barValue: {
+    fontSize: 9,
+    fontFamily: theme.typography.fontFamily.bold,
+    color: theme.colors.text.light,
+    marginBottom: 4,
   },
 
-  impactCard: { backgroundColor: theme.colors.primaryFaded, marginBottom: theme.spacing.md },
-  impactTitle: {
-    fontSize: theme.typography.fontSize.h3,
-    fontFamily: theme.typography.fontFamily.semibold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
+  // ── Legend
+  legendRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 5 
   },
-  impactMessage: {
-    fontSize: theme.typography.fontSize.body,
-    fontFamily: theme.typography.fontFamily.regular,
+  legendDot: { 
+    width: 8, 
+    height: 8, 
+    borderRadius: 4 
+  },
+  legendLabel: {
+    fontSize: 10,
+    fontFamily: theme.typography.fontFamily.medium,
     color: theme.colors.text.secondary,
-    lineHeight: theme.typography.fontSize.body * theme.typography.lineHeight.relaxed,
+    marginRight: 4,
+  },
+
+  // ── Goal Line
+  goalLine: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 8,
+    marginTop: 8,
+  },
+  goalLineDash: { 
+    flex: 1, 
+    height: 1, 
+    backgroundColor: theme.colors.border,
+  },
+  goalLineLabel: {
+    fontSize: 10,
+    fontFamily: theme.typography.fontFamily.bold,
+    color: theme.colors.text.light,
+  },
+
+  // ── Empty State
+  emptyChartBox: {
+    alignItems: 'center',
+    paddingVertical: 32,
+    gap: 12,
   },
   emptyText: {
-    fontSize: theme.typography.fontSize.body,
+    fontSize: 13,
     fontFamily: theme.typography.fontFamily.regular,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-    paddingVertical: theme.spacing.md,
+    color: theme.colors.text.light,
+  },
+
+  // ── Impact Sticker
+  impactSticker: {
+    backgroundColor: theme.colors.primary,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 20,
+  },
+  impactIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  impactSubtitle: {
+    fontSize: 10,
+    fontFamily: theme.typography.fontFamily.bold,
+    color: 'rgba(255,255,255,0.7)',
+    textTransform: 'uppercase',
+  },
+  impactValue: {
+    fontSize: 22,
+    fontFamily: theme.typography.fontFamily.extrabold,
+    color: '#FFFFFF',
+    marginVertical: 2,
+  },
+  impactText: {
+    fontSize: 12,
+    fontFamily: theme.typography.fontFamily.medium,
+    color: 'rgba(255,255,255,0.85)',
+    lineHeight: 18,
   },
 });
+

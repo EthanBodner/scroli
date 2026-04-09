@@ -33,7 +33,7 @@ export const CircularProgress: React.FC<Props> = ({
           cx={center}
           cy={center}
           r={radius}
-          stroke={theme.colors.border}
+          stroke="rgba(0,0,0,0.05)"
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -60,16 +60,19 @@ export const CircularProgress: React.FC<Props> = ({
 
 const styles = StyleSheet.create({
   label: {
-    fontSize: theme.typography.fontSize.h1,
+    fontSize: 28,
     fontFamily: theme.typography.fontFamily.extrabold,
     color: theme.colors.text.primary,
     textAlign: 'center',
+    lineHeight: 32,
   },
   sublabel: {
-    fontSize: theme.typography.fontSize.small,
-    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: 10,
+    fontFamily: theme.typography.fontFamily.bold,
     color: theme.colors.text.secondary,
     textAlign: 'center',
-    marginTop: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: -2,
   },
 });

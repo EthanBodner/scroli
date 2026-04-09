@@ -14,7 +14,7 @@ export const WeekCalendar: React.FC<WeekCalendarProps> = ({ weekHistory }) => {
   const getStatusColor = (status: DayStatus) => {
     switch (status) {
       case 'check':
-        return theme.colors.success;
+        return theme.colors.teal;
       case 'miss':
         return theme.colors.error;
       case 'future':

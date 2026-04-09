@@ -99,31 +99,41 @@ export const OnboardingScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  content: { flex: 1 },
+  container: { 
+    flex: 1, 
+    backgroundColor: theme.colors.primary, // Matches welcome hero
+  },
+  content: { 
+    flex: 1,
+  },
   footer: {
-    paddingHorizontal: theme.spacing.md,
-    paddingBottom: theme.spacing.md,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    backgroundColor: theme.colors.cream, // Matches step content
   },
   pagination: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: theme.spacing.xs,
-    marginBottom: theme.spacing.md,
+    gap: 8,
+    marginBottom: 20,
   },
   paginationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: theme.colors.border,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
   paginationDotActive: {
-    width: 24,
+    width: 18,
     backgroundColor: theme.colors.primary,
   },
   buttonContainer: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
+    gap: 12,
   },
-  button: { flex: 1 },
+  button: { 
+    flex: 1,
+    height: 56,
+    borderRadius: 20,
+  },
 });

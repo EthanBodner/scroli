@@ -4,12 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { Card } from '../../components/ui/Card';
-import { ProgressBar } from '../../components/ui/ProgressBar';
 import { Mascot } from '../../components/mascots/Mascot';
 import { WalletMascot } from '../../components/mascots/WalletMascot';
 import { PiggyMascot } from '../../components/mascots/PiggyMascot';
 import { CoinStackMascot } from '../../components/mascots/CoinStackMascot';
 import { WeekCalendar } from '../../components/WeekCalendar';
+import { CircularProgress } from '../../components/CircularProgress';
 import { TopOffendersCard } from './TopOffendersCard';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useAuth } from '../../contexts/AuthContext';
@@ -26,21 +26,19 @@ type DayStatus = 'check' | 'miss' | 'future';
 
 const MOCK_OFFENDERS = [
   { name: 'Instagram', icon: 'logo-instagram' as const, color: '#E4405F', time: '1h 12m' },
-  { name: 'TikTok', icon: 'musical-notes' as const, color: '#000000', time: '45m' },
-  { name: 'Twitter', icon: 'logo-twitter' as const, color: '#1DA1F2', time: '23m' },
+  { name: 'TikTok',   icon: 'musical-note'   as const, color: '#010101', time: '45m' },
+  { name: 'Twitter',  icon: 'logo-twitter'   as const, color: '#1DA1F2', time: '23m' },
 ];
 
-/** Returns ISO date string (YYYY-MM-DD) for Monday of the current week */
 function getMondayOfWeek(today: Date): Date {
   const d = new Date(today);
-  const day = d.getDay(); // 0=Sun, 1=Mon...
-  const diff = day === 0 ? -6 : 1 - day; // shift to Mon
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
   d.setDate(d.getDate() + diff);
   d.setHours(0, 0, 0, 0);
   return d;
 }
 
-/** Build array of 7 ISO date strings Mon–Sun for the current week */
 function getWeekDates(today: Date): string[] {
   const monday = getMondayOfWeek(today);
   return Array.from({ length: 7 }, (_, i) => {
@@ -50,14 +48,13 @@ function getWeekDates(today: Date): string[] {
   });
 }
 
-/** Compute streak: consecutive 'success' days ending at (and including) yesterday */
 function computeStreak(records: { date: string; status: string }[], today: string): number {
   const successSet = new Set(
     records.filter((r) => r.status === 'success').map((r) => r.date),
   );
   let streak = 0;
   const cursor = new Date(today);
-  cursor.setDate(cursor.getDate() - 1); // start from yesterday
+  cursor.setDate(cursor.getDate() - 1);
   while (true) {
     const dateStr = cursor.toISOString().split('T')[0];
     if (successSet.has(dateStr)) {
@@ -95,7 +92,7 @@ export const DashboardScreen: React.FC = () => {
     try {
       const [records, profileRes, goal] = await Promise.all([
         TrackingService.getRecentRecords(user.id, 35),
-        supabase.from('profiles').select('default_charity_id, charities(name)').eq('id', user.id).single(),
+        supabase.from('profiles').select('charities(name)').eq('id', user.id).single(),
         TrackingService.getActiveGoal(user.id),
       ]);
 
@@ -117,7 +114,6 @@ export const DashboardScreen: React.FC = () => {
       setCharityName(resolvedCharityName);
       setActiveMascot(getMascotForCharity(resolvedCharityName));
 
-      // Period usage
       const pt = (goal?.period_type ?? 'daily') as 'daily' | 'weekly' | 'monthly';
       setPeriodType(pt);
       setPeriodLimitMinutes(goal?.daily_limit_minutes ?? 180);
@@ -143,7 +139,6 @@ export const DashboardScreen: React.FC = () => {
     }
   }, [user, minutesToday]);
 
-  // Save daily record + fetch week data on mount
   useEffect(() => {
     if (user && permissionGranted && minutesToday > 0) {
       TrackingService.saveDailyRecord(user.id, minutesToday).catch(console.error);
@@ -151,7 +146,6 @@ export const DashboardScreen: React.FC = () => {
     fetchWeekData();
   }, [user, permissionGranted, minutesToday, fetchWeekData]);
 
-  // Refetch when app comes back to foreground
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') fetchWeekData();
@@ -160,7 +154,7 @@ export const DashboardScreen: React.FC = () => {
   }, [fetchWeekData]);
 
   const renderMascot = () => {
-    const props = { size: 240, usagePercent };
+    const props = { size: 180, usagePercent };
     switch (activeMascot) {
       case 'wallet': return <WalletMascot {...props} />;
       case 'piggy': return <PiggyMascot {...props} />;
@@ -170,251 +164,342 @@ export const DashboardScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
-        <View style={styles.header}>
-          <ScroliLogo variant="full" size="sm" />
-          <Pressable>
-            <Ionicons name="help-circle-outline" size={28} color={theme.colors.text.primary} />
-          </Pressable>
-        </View>
-
-        {/* Mascot */}
-        <View style={styles.mascotContainer}>
-          {renderMascot()}
-          {charityName && (
-            <View style={styles.charityPill}>
-              <Text style={styles.charityPillText}>❤️ Supporting {charityName}</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Current Hours */}
-        <Text style={styles.displayNumber}>
-          {loading ? '…' : periodType === 'daily' ? currentHours.toFixed(1) : periodUsageHours.toFixed(1)}
-        </Text>
-        <Text style={styles.hoursLabel}>hours {periodLabel}</Text>
-
-        {/* Progress Bar */}
-        <View style={styles.progressBarContainer}>
-          <ProgressBar progress={usagePercent} height={12} />
-        </View>
-        <View style={styles.progressLabels}>
-          <Text style={styles.progressLabel}>0</Text>
-          <Text style={styles.progressLabel}>{periodLimitHours % 1 === 0 ? periodLimitHours : periodLimitHours.toFixed(1)}h {periodType === 'daily' ? 'goal' : `/ ${periodType}`}</Text>
-        </View>
-
-        {/* Status Card */}
-        <Card style={styles.statusCard}>
-          <View style={styles.statusRow}>
-            <View style={styles.statusItem}>
-              <Text style={styles.statusLabel}>Screen Time Today</Text>
-              <Text style={styles.statusValue}>{formatTime(currentHours * 60)}</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.statusItem}>
-              <Text style={styles.statusLabel}>At Stake</Text>
-              <Text style={[styles.statusValue, styles.statusValueStake]}>
-                ${stakeAmount}
-              </Text>
+    <View style={styles.container}>
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <ScroliLogo variant="full" size="sm" color={theme.colors.primary} />
+            <View style={styles.headerRight}>
+              <Pressable style={[styles.iconButton, styles.headerIcon]}>
+                <Ionicons name="help-circle" size={24} color={theme.colors.text.secondary} />
+              </Pressable>
+              <Pressable style={[styles.iconButton, styles.headerIcon]}>
+                <Ionicons name="notifications" size={24} color={theme.colors.text.secondary} />
+              </Pressable>
             </View>
           </View>
-        </Card>
 
-        {/* Streak Bonus */}
-        <View style={styles.bonusCard}>
-          <View style={styles.bonusLeft}>
-            <Text style={styles.bonusTitle}>🔥 Streak Bonus</Text>
-            <Text style={styles.bonusSubtitle}>
-              {streakToBonus === 7
-                ? 'Start a streak to earn your stake back!'
-                : `${streakToBonus} more day${streakToBonus === 1 ? '' : 's'} → earn $${stakeAmount} back`}
-            </Text>
+          <View style={styles.heroContainer}>
+            <View style={styles.mascotStage}>
+              <View style={styles.mascotUnderlay}>
+                {renderMascot()}
+              </View>
+              {charityName && (
+                <View style={styles.heroCharityPill}>
+                  <Ionicons name="heart" size={10} color={theme.colors.primary} />
+                  <Text style={styles.heroCharityText}>{charityName}</Text>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.statsContainer}>
+              <View style={styles.timeCircle}>
+                <CircularProgress
+                  progress={usagePercent}
+                  size={120}
+                  strokeWidth={14}
+                  color={usagePercent > 0.9 ? theme.colors.error : theme.colors.teal}
+                  label={loading ? '…' : (periodType === 'daily' ? `${currentHours.toFixed(1)}` : `${periodUsageHours.toFixed(1)}`)}
+                  sublabel="hours"
+                />
+              </View>
+              <View style={styles.goalInfo}>
+                <Text style={styles.goalLabel}>{periodLabel} Limit</Text>
+                <Text style={styles.goalValue}>{periodLimitHours}h</Text>
+              </View>
+            </View>
           </View>
-          <View style={styles.bonusDots}>
-            {Array.from({ length: 7 }).map((_, i) => (
-              <View
-                key={i}
-                style={[styles.bonusDot, i < (streak % 7) && styles.bonusDotFilled]}
-              />
-            ))}
+
+          <View style={styles.metricRow}>
+            <Card style={[styles.metricChip, { backgroundColor: '#FFFFFF' }]}>
+              <View style={[styles.chipIcon, { backgroundColor: 'rgba(124, 58, 237, 0.1)' }]}>
+                <Ionicons name="time" size={18} color="#7C3AED" />
+              </View>
+              <View>
+                <Text style={styles.chipValue}>{formatTime(currentHours * 60)}</Text>
+                <Text style={styles.chipLabel}>Used Today</Text>
+              </View>
+            </Card>
+
+            <Card style={[styles.metricChip, { backgroundColor: '#FFFFFF' }]}>
+              <View style={[styles.chipIcon, { backgroundColor: 'rgba(232, 112, 106, 0.1)' }]}>
+                <Ionicons name="shield-checkmark" size={18} color={theme.colors.primary} />
+              </View>
+              <View>
+                <Text style={[styles.chipValue, { color: theme.colors.primary }]}>${stakeAmount}</Text>
+                <Text style={styles.chipLabel}>At Stake</Text>
+              </View>
+            </Card>
           </View>
-        </View>
 
-        {/* Streak Section */}
-        <View style={styles.streakSection}>
-          <Text style={styles.sectionTitle}>Current Streak</Text>
-          <View style={styles.streakContainer}>
-            <Text style={styles.streakEmojis}>🔥🔥🔥</Text>
-            <Text style={styles.streakText}>
-              {streak === 0 ? 'Start today!' : `${streak} day${streak === 1 ? '' : 's'}`}
-            </Text>
+          <Card style={styles.streakCard}>
+            <View style={styles.streakHeader}>
+              <View style={styles.streakInfo}>
+                <View style={styles.streakFireCircle}>
+                  <Ionicons name="flame" size={24} color="#F97316" />
+                </View>
+                <View>
+                  <Text style={styles.streakTitle}>{streak} Day Streak</Text>
+                  <Text style={styles.streakSubtitle}>
+                    {streakToBonus} more day{streakToBonus === 1 ? '' : 's'} to earn bonus
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.streakValueBadge}>
+                <Text style={styles.streakValueText}>+{streak % 7}/7</Text>
+              </View>
+            </View>
+            
+            <View style={styles.streakDotsLayout}>
+              {Array.from({ length: 7 }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.streakDot,
+                    i < (streak % 7) && styles.streakDotActive,
+                    i === (streak % 7) && styles.streakDotNext
+                  ]}
+                />
+              ))}
+            </View>
+          </Card>
+
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitleText}>Your Consistency</Text>
           </View>
-        </View>
+          <Card style={styles.weekCard}>
+            <WeekCalendar weekHistory={weekHistory} />
+          </Card>
 
-        {/* Week Calendar */}
-        <View style={styles.weekSection}>
-          <Text style={styles.sectionTitle}>This Week</Text>
-          <WeekCalendar weekHistory={weekHistory} />
-        </View>
-
-        {/* Top Offenders */}
-        <TopOffendersCard offenders={MOCK_OFFENDERS} />
-      </ScrollView>
-    </SafeAreaView>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitleText}>Screen Time Breakdown</Text>
+          </View>
+          <TopOffendersCard offenders={MOCK_OFFENDERS} />
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.cream,
   },
   scrollContent: {
-    paddingHorizontal: theme.spacing.md,
-    paddingBottom: theme.spacing.xl,
+    paddingHorizontal: 16,
+    paddingBottom: 40,
+    paddingTop: 8,
   },
   header: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.md,
+    paddingVertical: 12,
+    marginBottom: 4,
   },
-  mascotContainer: {
-    alignItems: 'center',
-    marginVertical: theme.spacing.sm,
-    gap: theme.spacing.xs,
+  headerRight: {
+    flexDirection: 'row',
+    gap: 8,
   },
-  charityPill: {
+  iconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerIcon: {
+    backgroundColor: '#FFFFFF',
+    ...theme.shadows.sm,
+  },
+  heroContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+    paddingTop: 12,
+  },
+  mascotStage: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  mascotUnderlay: {
+    width: 200,
+    height: 200,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: theme.colors.primaryFaded,
-    borderRadius: theme.borderRadius.full,
-    paddingHorizontal: 14,
+    borderRadius: 100,
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
+    ...theme.shadows.md,
+  },
+  heroCharityPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
     paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: theme.colors.primaryLight,
+    borderRadius: 20,
+    marginTop: -20,
+    gap: 4,
+    ...theme.shadows.sm,
+    borderWidth: 2,
+    borderColor: theme.colors.primaryFaded,
   },
-  charityPillText: {
-    fontSize: theme.typography.fontSize.small,
-    fontFamily: theme.typography.fontFamily.medium,
-    color: theme.colors.primary,
-  },
-  displayNumber: {
-    fontSize: theme.typography.fontSize.display,
-    fontFamily: theme.typography.fontFamily.extrabold,
-    color: theme.colors.text.primary,
-    textAlign: 'center',
-  },
-  hoursLabel: {
-    fontSize: theme.typography.fontSize.h3,
-    fontFamily: theme.typography.fontFamily.medium,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-    marginTop: theme.spacing.xs,
-  },
-  progressBarContainer: {
-    marginTop: theme.spacing.md,
-    marginBottom: theme.spacing.xs,
-  },
-  progressLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: theme.spacing.md,
-  },
-  progressLabel: {
-    fontSize: theme.typography.fontSize.small,
-    color: theme.colors.text.secondary,
-  },
-  statusCard: {
-    marginBottom: theme.spacing.md,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statusItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  divider: {
-    width: 1,
-    height: 40,
-    backgroundColor: theme.colors.border,
-  },
-  statusLabel: {
-    fontSize: theme.typography.fontSize.small,
-    fontFamily: theme.typography.fontFamily.medium,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xs,
-  },
-  statusValue: {
-    fontSize: theme.typography.fontSize.h2,
-    fontFamily: theme.typography.fontFamily.extrabold,
-    color: theme.colors.text.primary,
-  },
-  statusValueStake: {
-    color: theme.colors.primary,
-  },
-  bonusCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: theme.colors.primaryFaded,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
-    borderLeftWidth: 4,
-    borderLeftColor: theme.colors.primary,
-  },
-  bonusLeft: { flex: 1 },
-  bonusTitle: {
-    fontSize: theme.typography.fontSize.body,
-    fontFamily: theme.typography.fontFamily.semibold,
-    color: theme.colors.primary,
-    marginBottom: 2,
-  },
-  bonusSubtitle: {
-    fontSize: theme.typography.fontSize.small,
-    fontFamily: theme.typography.fontFamily.regular,
-    color: theme.colors.text.secondary,
-  },
-  bonusDots: {
-    flexDirection: 'row',
-    gap: 5,
-    paddingLeft: theme.spacing.sm,
-  },
-  bonusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: theme.colors.border,
-  },
-  bonusDotFilled: {
-    backgroundColor: theme.colors.primary,
-  },
-  streakSection: {
-    marginBottom: theme.spacing.md,
-  },
-  sectionTitle: {
-    fontSize: theme.typography.fontSize.h3,
-    fontFamily: theme.typography.fontFamily.semibold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
-  },
-  streakContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  streakEmojis: {
-    fontSize: theme.typography.fontSize.h1,
-  },
-  streakText: {
-    fontSize: theme.typography.fontSize.h2,
+  heroCharityText: {
+    fontSize: 10,
     fontFamily: theme.typography.fontFamily.bold,
+    color: theme.colors.primary,
+    textTransform: 'uppercase',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 32,
+    gap: 20,
+    ...theme.shadows.md,
+    borderWidth: 2,
+    borderColor: theme.colors.cream,
+    width: '100%',
+  },
+  timeCircle: {
+    padding: 2,
+    backgroundColor: '#FFFFFF',
+  },
+  goalInfo: {
+    flex: 1,
+  },
+  goalLabel: {
+    fontSize: 12,
+    fontFamily: theme.typography.fontFamily.bold,
+    color: theme.colors.text.light,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  goalValue: {
+    fontSize: 24,
+    fontFamily: theme.typography.fontFamily.extrabold,
     color: theme.colors.text.primary,
   },
-  weekSection: {
-    marginBottom: theme.spacing.md,
+  metricRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  metricChip: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 18,
+    borderRadius: 24,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.02)',
+  },
+  chipIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chipValue: {
+    fontSize: 18,
+    fontFamily: theme.typography.fontFamily.extrabold,
+    color: theme.colors.text.primary,
+  },
+  chipLabel: {
+    fontSize: 10,
+    fontFamily: theme.typography.fontFamily.bold,
+    color: theme.colors.text.secondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  streakCard: {
+    padding: 20,
+    marginBottom: 16,
+    borderRadius: 28,
+  },
+  streakHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  streakInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  streakFireCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFF7ED',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  streakTitle: {
+    fontSize: 18,
+    fontFamily: theme.typography.fontFamily.extrabold,
+    color: theme.colors.text.primary,
+  },
+  streakSubtitle: {
+    fontSize: 11,
+    fontFamily: theme.typography.fontFamily.medium,
+    color: theme.colors.text.light,
+  },
+  streakValueBadge: {
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  streakValueText: {
+    fontSize: 11,
+    fontFamily: theme.typography.fontFamily.bold,
+    color: '#F97316',
+  },
+  streakDotsLayout: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 6,
+  },
+  streakDot: {
+    flex: 1,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#F3F4F6',
+  },
+  streakDotActive: {
+    backgroundColor: '#F97316',
+  },
+  streakDotNext: {
+    backgroundColor: '#FED7AA',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    marginTop: 8,
+    paddingHorizontal: 4,
+  },
+  sectionTitleText: {
+    fontSize: 13,
+    fontFamily: theme.typography.fontFamily.bold,
+    color: theme.colors.text.light,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  weekCard: {
+    padding: 16,
+    marginBottom: 16,
+    borderRadius: 24,
   },
 });

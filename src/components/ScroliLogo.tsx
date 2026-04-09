@@ -7,6 +7,7 @@ interface ScroliLogoProps {
   size?: 'sm' | 'md' | 'lg';
   variant?: 'full' | 'icon';
   dark?: boolean;
+  color?: string;
 }
 
 const SIZES = {
@@ -49,9 +50,11 @@ export const ScroliLogo: React.FC<ScroliLogoProps> = ({
   size = 'md',
   variant = 'full',
   dark = false,
+  color,
 }) => {
   const s = SIZES[size];
-  const textColor = dark ? colors.text.white : colors.primary;
+  const textColor = color || (dark ? colors.text.white : colors.primary);
+  const iconColor = color || (dark ? colors.text.white : colors.primary);
 
   if (variant === 'icon') {
     return (
@@ -63,7 +66,7 @@ export const ScroliLogo: React.FC<ScroliLogoProps> = ({
 
   return (
     <View style={[styles.row, { gap: s.gap }]}>
-      <WaveIcon size={s.icon} />
+      <WaveIcon size={s.icon} color={iconColor} />
       <Text style={[styles.wordmark, { fontSize: s.text, color: textColor }]}>
         scroli
       </Text>

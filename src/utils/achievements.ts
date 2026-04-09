@@ -10,36 +10,36 @@ export type AchievementStats = {
 
 export type Achievement = {
   id: string;
-  emoji: string;
+  icon: string;
   name: string;
   desc: string;
   check: (s: AchievementStats) => boolean;
 };
 
 export const ACHIEVEMENTS: Achievement[] = [
-  { id: 'first_win',    emoji: '🏆', name: 'First Win',     desc: 'Hit your goal for the first time',  check: (s) => s.wins >= 1 },
-  { id: 'week_warrior', emoji: '⚡', name: 'Week Warrior',  desc: '7-day streak',                      check: (s) => s.longestStreak >= 7 },
-  { id: 'month_master', emoji: '👑', name: 'Month Master',  desc: '30-day streak',                     check: (s) => s.longestStreak >= 30 },
-  { id: 'perfect_week', emoji: '🌟', name: 'Perfect Week',  desc: '7 consecutive wins',                check: (s) => s.longestStreak >= 7 },
-  { id: 'saver',        emoji: '💰', name: 'Saver',         desc: '$10 earned back',                   check: (s) => s.moneySaved >= 10 },
-  { id: 'contributor',  emoji: '❤️', name: 'Contributor',   desc: '$5 donated to charity',             check: (s) => s.moneyDonated >= 5 },
-  { id: 'thirty_days',  emoji: '📅', name: '30 Days',       desc: '30 days tracked',                   check: (s) => s.totalDays >= 30 },
-  { id: 'century',      emoji: '🎯', name: 'Century',       desc: '100 days tracked',                  check: (s) => s.totalDays >= 100 },
+  { id: 'first_win',    icon: 'trophy',           name: 'First Win',    desc: 'Hit your goal for the first time', check: (s) => s.wins >= 1 },
+  { id: 'week_warrior', icon: 'flash',             name: 'Week Warrior', desc: '7-day streak',                     check: (s) => s.longestStreak >= 7 },
+  { id: 'month_master', icon: 'star',              name: 'Month Master', desc: '30-day streak',                    check: (s) => s.longestStreak >= 30 },
+  { id: 'perfect_week', icon: 'checkmark-circle',  name: 'Perfect Week', desc: '7 consecutive wins',               check: (s) => s.longestStreak >= 7 },
+  { id: 'saver',        icon: 'cash',              name: 'Saver',        desc: '$10 earned back',                  check: (s) => s.moneySaved >= 10 },
+  { id: 'contributor',  icon: 'heart',             name: 'Contributor',  desc: '$5 donated to charity',            check: (s) => s.moneyDonated >= 5 },
+  { id: 'thirty_days',  icon: 'calendar',          name: '30 Days',      desc: '30 days tracked',                  check: (s) => s.totalDays >= 30 },
+  { id: 'century',      icon: 'medal',             name: 'Century',      desc: '100 days tracked',                 check: (s) => s.totalDays >= 100 },
 ];
 
 export type LevelInfo = {
   name: string;
   minWinRate: number;
-  emoji: string;
+  icon: string;
   color: string;
 };
 
 export const LEVELS: LevelInfo[] = [
-  { name: 'Getting Started', minWinRate: 0,   emoji: '🌱', color: '#9CA3AF' },
-  { name: 'Building',        minWinRate: 0.3,  emoji: '🔨', color: '#F59E0B' },
-  { name: 'Focused',         minWinRate: 0.5,  emoji: '🎯', color: '#3B82F6' },
-  { name: 'Disciplined',     minWinRate: 0.7,  emoji: '⚡', color: '#8B5CF6' },
-  { name: 'Master',          minWinRate: 0.9,  emoji: '👑', color: '#059669' },
+  { name: 'Getting Started', minWinRate: 0,    icon: 'leaf-outline',       color: '#9CA3AF' },
+  { name: 'Building',        minWinRate: 0.3,  icon: 'hammer-outline',     color: '#F59E0B' },
+  { name: 'Focused',         minWinRate: 0.5,  icon: 'eye-outline',        color: '#3B82F6' },
+  { name: 'Disciplined',     minWinRate: 0.7,  icon: 'flash-outline',      color: '#8B5CF6' },
+  { name: 'Master',          minWinRate: 0.9,  icon: 'crown',              color: '#059669' },
 ];
 
 export function getLevel(winRate: number): LevelInfo {
